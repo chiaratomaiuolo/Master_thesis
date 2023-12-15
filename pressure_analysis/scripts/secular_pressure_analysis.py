@@ -1,60 +1,68 @@
 """Analysis script
 """
+
+import argparse
+
 import numpy as np 
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 
+from loguru import logger
 from astropy.io import fits
 from scipy.stats import norm
 from scipy.optimize import curve_fit
 
-from pressure_analysis.models import Gauss
+#from pressure_analysis.models import gaussian, exponential
 
-"""This script is done for fitting and plotting the track sampled from a
-GPD detector, in particular takes a data ascquisition in input and plots
-the ADC counts of the tracks, does a Gaussian fit and prints the optimal
-parameters. 
+__description__ = \
+"""Fits and plots the track sampled from a GPD detector, in particular takes
+reconstructed data files and plots the ADC counts of the tracks, does a 
+Gaussian fit and prints the optimal parameters. 
 """
 
-def secular_pressure_analysis(dataset_id : np.array) -> None:
-    """Opens files and performs the analysis.
+# Parser object.
+SECULAR_PRESSURE_ANALYSIS_ARGPARSER = argparse.ArgumentParser(description=__description__)
+SECULAR_PRESSURE_ANALYSIS_ARGPARSER.add_argument('path_to_data_directory', type=str,
+            help='path to the directory containing data')
+SECULAR_PRESSURE_ANALYSIS_ARGPARSER.add_argument('attribute_name', type=str, help= 'The\
+                                                attribute to be analyzed. It can be chosen\
+                                                from the list of attributes in a recon\
+                                                .fits file.')
 
+
+def file_opening(file_path : str) -> list:
+    """Opens a fits file and returns the events inside.
     Arguments
     ---------
-    dataset_id : np.array 
-        An array-like containing the IDs of the datasets to be analyzed.
-    
+    file_path : str
+        file path to the .fits file to be opened
+    Return 
+    ------
+    data : list 
+        list containing events 
     """
-    return
-
-
-
+    with fits.open(file_path) as hdu_list:
+        data = hdu_list['EVENTS'].data
+        return data
 
 if __name__ == '__main__':
-    #Collecting .fits data from file 
-    f=fits.getdata("/Users/chiara/Desktop/Thesis_material/data/drive-download-20230317T130511Z-001/020_0001777/020_0001777_data_recon.fits")
-    #Selecting the data of the primary peak (the cutting value in chosen after plotting the whole set preliminarly)
-    cutting_value = 5000
-    primary_peak = f['PHA'][f['PHA']> cutting_value]
+    #Defining the data id number
+    data_id = '020_0001869'
+    filepath_to_data_dir = SECULAR_PRESSURE_ANALYSIS_ARGPARSER.parse_args().path_to_data_directory
+    attribute = SECULAR_PRESSURE_ANALYSIS_ARGPARSER.parse_args().attribute_name
+    file_path = f"{filepath_to_data_dir}/{data_id}/{data_id}_data_recon.fits"
+    events = file_opening(file_path)
+    #Defining the cuts 
+    #(events['TRK_SIZE'] > 0) & (events['TRK_SIZE'] < 300)
+    borders_mask = (events['ABSX'] < 7.5) & (events['ABSY'] < 7.5)
+    trk_size_mask = (events['TRK_SIZE'] > 0) & (events['TRK_SIZE'] < 300)
+    mask = np.logical_and(borders_mask,trk_size_mask)
+    data = events[attribute]
+    masked_data = data[mask]
+    print(f'-------- Analyzing attribute {attribute} (with cuts): mean = {np.mean(masked_data)}, std = {np.std(masked_data)} -----------')
+    
+    plt.figure()
+    plt.hist(data, bins = 50)
+    plt.hist2d(pha_cutted, trksize_cutted, bins=[50,50], range=[[0,20000],[0,300]])
 
-    #Starting value for Gaussian model (chosen after plotting the whole set preliminarly)
-    p01 = np.array([1.,7000,150])
-
-    #Fitting  and plotting the primary peak histogram
-
-    plt.figure(1)
-    n, edges, patches = plt.hist(primary_peak, bins=100)
-    bincenters = (edges[:-1] + edges[1:]) / 2
-    plt.xlabel('ADC counts [ADC]')
-    plt.ylabel('Occurrencies')
-
-    popt, pcov = curve_fit(Gauss, bincenters, n, p0=p01)
-    norm_fit, mu_fit, sigma_fit = popt
-    print(f'Optimal parameters: norm = {norm_fit} +/- {np.sqrt(pcov[0][0])}, mu = {mu_fit} +/- {np.sqrt(pcov[1][1])}, sigma = {sigma_fit} +/- {np.sqrt(pcov[2][2])}')
-
-    label = "N = {:.1f} +/- {:.1f}\n$\mu$ = {:.1f} +/- {:.1f}\n$\sigma$ = {:.1f} +/- {:.1f}".format(norm_fit,np.sqrt(pcov[0][0]), mu_fit, np.sqrt(pcov[1][1]), sigma_fit, np.sqrt(pcov[2][2]))
-    z = np.linspace(min(bincenters), max(bincenters), 1000)
-    plt.plot(z, Gauss(z, *popt), label=label)
-
-    plt.legend(loc='best')
     plt.show()
