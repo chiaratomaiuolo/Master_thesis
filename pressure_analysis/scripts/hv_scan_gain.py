@@ -17,6 +17,9 @@ HV_SCAN_GAIN_ARGPARSER = argparse.ArgumentParser(description=__description__)
 HV_SCAN_GAIN_ARGPARSER.add_argument('gas_type', type=str,
             help="gas type hv scan to be analyzed. It can be chosen between 'Ar'\
                 and 'DME'")
+HV_SCAN_GAIN_ARGPARSER.add_argument('plot_true', type=str, default='True',
+            help="if 'True', plots the figures")
+
 
 """Defining the dictionaries filled with data: 
     HV value [V]
@@ -38,6 +41,7 @@ data_Ar = {1050: (np.array([470,475,480,485,490,495]),
                np.array([2.41983e-01, 2.24806e-01, 2.18380e-01, 2.07768e-01, 2.01876e-01, 1.95274e-01]), 
                np.array([2.32420e-03, 2.18750e-03, 2.16568e-03, 1.99791e-03, 1.98421e-03, 1.93137e-03]),
                np.array([98,105,112,119,126,132]),
+               np.array([0,0,0,0,0,0]),
                np.array([23,25,26,28,30,31]),
                '.',
                'tab:orange'),
@@ -47,6 +51,7 @@ data_Ar = {1050: (np.array([470,475,480,485,490,495]),
               np.array([2.64847e-01, 2.43231e-01, 2.26907e-01, 2.16511e-01, 2.10544e-01, 1.97267e-01]), 
               np.array([2.71184e-03, 2.50197e-03, 2.31902e-03, 2.24659e-03, 2.17428e-03, 2.03899e-03]),
               np.array([103,111,120,128,136,144]),
+              np.array([0,0,0,0,0,0]),
               np.array([25,27,29,31,33,36]),
               '.',
               'tab:blue'),
@@ -56,6 +61,7 @@ data_Ar = {1050: (np.array([470,475,480,485,490,495]),
                   np.array([3.19173e-01,2.86031e-01,2.54087e-01,2.38682e-01,2.24541e-01,2.08841e-01]),
                   np.array([3.37182e-03,3.12297e-03,2.69829e-03,2.66632e-03,2.39975e-03,2.27133e-03]),
                   np.array([106,117,128,138,147,157]),
+                  np.array([0,0,0,0,0,0]),
                   np.array([27,29,32,34,37,40]),
                   '.',
                   'tab:green'),
@@ -65,6 +71,7 @@ data_Ar = {1050: (np.array([470,475,480,485,490,495]),
                   np.array([3.84587e-01,3.28564e-01,2.85835e-01,2.57298e-01,2.34863e-01,2.19281e-01]),
                   np.array([4.38797e-03,3.62416e-03,3.29435e-03,2.97945e-03,2.78117e-03,2.38081e-03]),
                   np.array([119,133,147,160,173,185]),
+                  np.array([0,0,0,0,0,0]),
                   np.array([33,35,38,42,46,49]),
                   '.',
                   'tab:red')}
@@ -129,19 +136,23 @@ def plot_HV_scan(volt, adc_counts, d_adc_counts, resolution, d_resolution,
     #Fitting the gain with an exponential curve
     popt, pcov = curve_fit(expo, volt, adc_counts, p0=(adc_counts.min(), 35), sigma=d_adc_counts) 
     norm, scale = popt
+    #Using uncertainties in order to propagate error correctly
     norm_u = ufloat(norm, np.sqrt(pcov[0][0]))
     scale_u = ufloat(scale, np.sqrt(pcov[1][1]))
-    print(f'Optimal parameters for {gas_type} at P={pressure} mbar : norm = {norm} +/- {np.sqrt(pcov[0][0])}, scale = {scale} +/- {np.sqrt(pcov[1][1])}')
+    print(f'Optimal parameters for {gas_type} at P={pressure} mbar : norm = {norm} +/- {np.sqrt(pcov[0][0])}, scale = {scale} +/- {np.sqrt(pcov[1][1])}\n')
     #Printing curve value at reference gain
     gain =  norm_u*exp((reference_voltage-400)/scale_u)
-    print(f'----Gain at reference voltage DeltaV = {reference_voltage}: gain = {gain}-----')
+    print(f'----Gain at reference voltage DeltaV = {reference_voltage}: gain = {gain}-----\n')
     #Fitting the mean track size with a line
     popt_trk, pcov_trk = curve_fit(line, volt, track_size_mean, sigma=d_track_size_mean)
     m, q = popt_trk
+    chi_line = (((track_size_mean- line(volt, *popt_trk))/d_track_size_mean)**2).sum()
+    print(f'Best parameters: {popt_trk}\n Covariance matrix for line fit of track size:\n {pcov_trk}')
     m_u = ufloat(m, np.sqrt(pcov_trk[0][0]))
     q_u = ufloat(q, np.sqrt(pcov_trk[1][1]))
     mean_trk_size_u = m_u*reference_voltage + q_u
-    print(f'-------Mean track size at reference voltage DeltaV = {reference_voltage}: track_size = {mean_trk_size_u}-----')
+    print(f'-------Mean track size at reference voltage DeltaV = {reference_voltage}:\
+          track_size = {mean_trk_size_u} with a chi^2/ndof on fit = {chi_line}/{len(track_size_mean) - 2}-----\n')
 
 
     z = np.linspace(np.min(volt),np.max(volt),1000)
@@ -227,10 +238,11 @@ if __name__ == '__main__':
         chi2_DME = (((scale_array_DME- line(pressure_array_DME, *popt_scale))/d_scale_array_DME)**2).sum()
         print(f'chi^2 = {chi2_DME}')
         w = np.linspace(600, 900, 100)
-        plt.plot(w, line(w, *popt_scale), color ='tab:cyan', label=f'm = {popt_scale[0]:.6f} +/- {np.sqrt(pcov_scale[0][0]):.6f} \n q = {popt_scale[1]:.2f} +/- {np.sqrt(pcov_scale[1][1]):.2f}')
-        print(f'Parameters for line fitting of scale factors: m = {popt_scale[0]} +/- {np.sqrt(pcov_scale[0][0])} , q = {popt_scale[1]} +/- {np.sqrt(pcov_scale[1][1]) }')
+        plt.plot(w, line(w, *popt_scale), color ='tab:cyan', label=f'm = {popt_scale[0]:.6f} +/- {np.sqrt(pcov_scale[0][0]):.6f} \n q = {popt_scale[1]:.2f} +/- {np.sqrt(pcov_scale[1][1]):.2f}\n')
+        print(f'Parameters for line fitting of scale factors: m = {popt_scale[0]} +/- {np.sqrt(pcov_scale[0][0])} , q = {popt_scale[1]} +/- {np.sqrt(pcov_scale[1][1]) }\n')
         plt.legend(loc='best')
-        plt.show()
+        if HV_SCAN_GAIN_ARGPARSER.parse_args().plot_true == 'True':
+            plt.show()
     if HV_SCAN_GAIN_ARGPARSER.parse_args().gas_type == 'Ar':
         scale_array_Ar = []
         d_scale_array_Ar = []
@@ -251,5 +263,5 @@ if __name__ == '__main__':
         plt.plot(w, line(w, *popt_scale), color ='tab:cyan', label=f'm = {popt_scale[0]:.6f} +/- {np.sqrt(pcov_scale[0][0]):.6f} \n q = {popt_scale[1]:.2f} +/- {np.sqrt(pcov_scale[1][1]):.2f}')
         print(f'Parameters for line fitting of scale factors: m = {popt_scale[0]} +/- {np.sqrt(pcov_scale[0][0])} , q = {popt_scale[1]} +/- {np.sqrt(pcov_scale[1][1]) }')
         plt.legend(loc='best')
-
-        plt.show()
+        if HV_SCAN_GAIN_ARGPARSER.parse_args().plot_true == 'True':
+            plt.show()
