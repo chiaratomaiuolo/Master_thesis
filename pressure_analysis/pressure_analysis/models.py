@@ -6,7 +6,7 @@ from typing import Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 
-def Gaussian(x : np.array, norm : float, mu : float, sigma : float) -> np.array:
+def gaussian(x : np.array, norm : float, mu : float, sigma : float) -> np.array:
     """Gaussian curve definition
     """
     return norm*np.exp(-0.5*((x-mu)/sigma)**2)
