@@ -146,12 +146,13 @@ def expo(x,norm, scale):
 def plot_HV_scan(volt, adc_counts, d_adc_counts, resolution, d_resolution,
                  track_size_mean, d_track_size_mean, track_size_std, pressure, gas_type, reference_voltage):
     #Fitting the gain with an exponential curve
-    popt, pcov = curve_fit(expo, volt, adc_counts, p0=(adc_counts.min(), 35), sigma=d_adc_counts) 
-    norm, scale = popt
+    popt_gain, pcov_gain = curve_fit(expo, volt, adc_counts, p0=(adc_counts.min(), 35), sigma=d_adc_counts) 
+    norm, scale = popt_gain
     #Using uncertainties in order to propagate error correctly
-    norm_u = ufloat(norm, np.sqrt(pcov[0][0]))
-    scale_u = ufloat(scale, np.sqrt(pcov[1][1]))
-    print(f'Optimal parameters for {gas_type} at P={pressure} mbar : norm = {norm} +/- {np.sqrt(pcov[0][0])}, scale = {scale} +/- {np.sqrt(pcov[1][1])}\n')
+    norm_u = ufloat(norm, np.sqrt(pcov_gain[0][0]))
+    scale_u = ufloat(scale, np.sqrt(pcov_gain[1][1]))
+    print(f'Optimal parameters for GAIN having gas type: {gas_type} at P={pressure} mbar :\
+            norm = {norm} +/- {np.sqrt(pcov_gain[0][0])}, scale = {scale} +/- {np.sqrt(pcov_gain[1][1])}\n')
     #Printing curve value at reference gain
     gain =  norm_u*exp((reference_voltage-400)/scale_u)
     print(f'----Gain at reference voltage DeltaV = {reference_voltage}: gain = {gain}-----\n')
@@ -159,12 +160,17 @@ def plot_HV_scan(volt, adc_counts, d_adc_counts, resolution, d_resolution,
     popt_trk, pcov_trk = curve_fit(line, volt, track_size_mean, sigma=d_track_size_mean)
     m, q = popt_trk
     chi_line = (((track_size_mean - line(volt, *popt_trk))/d_track_size_mean)**2).sum()
-    print(f'Best parameters: {popt_trk}\n Covariance matrix for line fit of track size:\n {pcov_trk}')
+    print(f'Best parameters for TRK_SIZE linear fit: {popt_trk}\n Covariance matrix:\n {pcov_trk}')
     m_u = ufloat(m, np.sqrt(pcov_trk[0][0]))
     q_u = ufloat(q, np.sqrt(pcov_trk[1][1]))
-    mean_trk_size_u = m_u*reference_voltage + q_u
+    print(f'{np.sqrt((pcov_trk[0][0]*(reference_voltage**2))+ pcov_trk[1][1])}')
+    print(f'{2*pcov_trk[0][1]*np.sqrt(pcov_trk[0][0]*pcov_trk[1][1])}')
+    std_trk_size_reference_V = np.sqrt((pcov_trk[0][0]*(reference_voltage**2))\
+                               + pcov_trk[1][1] + 2*pcov_trk[0][1]*np.sqrt(pcov_trk[0][0]*pcov_trk[1][1]))
+    mean_trk_size_u = ufloat(m*reference_voltage + q, std_trk_size_reference_V)
+    mean_trk_size_u2 = m_u*reference_voltage + q_u
     print(f'-------Mean track size at reference voltage DeltaV = {reference_voltage}:\
-          track_size = {mean_trk_size_u} with a chi^2/ndof on fit = {chi_line}/{len(track_size_mean) - 2}-----\n')
+          track_size = {mean_trk_size_u}   {mean_trk_size_u2}        {m*reference_voltage + q} +/- {std_trk_size_reference_V} with a chi^2/ndof on fit = {chi_line}/{len(track_size_mean) - 2}-----\n')
 
 
     z = np.linspace(np.min(volt),np.max(volt),1000)
@@ -177,11 +183,11 @@ def plot_HV_scan(volt, adc_counts, d_adc_counts, resolution, d_resolution,
     #plt.ylim(min(adc_counts)-100,max(adc_counts)+1000)
     plt.xlabel('HV [V]')
     plt.ylabel('peak value [ADC]')
-    plt.plot(z, expo(z,*popt))
+    plt.plot(z, expo(z,*popt_gain))
     plt.legend()
     plt.grid(True)
     
-    res = (adc_counts - expo(volt,*popt))
+    res = (adc_counts - expo(volt,*popt_gain))
     plt.subplot(212)
     plt.xlabel('HV [V]')
     plt.ylabel('peak value [ADC]')
@@ -218,12 +224,12 @@ def plot_HV_scan(volt, adc_counts, d_adc_counts, resolution, d_resolution,
     plt.figure(5)
     plt.xlabel('pressure [mbar]')
     plt.ylabel('$\lambda$ [V]')
-    plt.errorbar(pressure, scale, np.sqrt(pcov[1][1]), 10, fmt=marker, color=color)
+    plt.errorbar(pressure, scale, np.sqrt(pcov_gain[1][1]), 10, fmt=marker, color=color)
     plt.grid(True)
 
 
 
-    return scale, np.sqrt(pcov[1][1])
+    return scale, np.sqrt(pcov_gain[1][1])
 
 
 if __name__ == '__main__':
