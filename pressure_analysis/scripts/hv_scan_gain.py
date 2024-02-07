@@ -145,8 +145,8 @@ def expo(x,norm, scale):
 
 def plot_HV_scan(volt, adc_counts, d_adc_counts, resolution, d_resolution,
                  track_size_mean, d_track_size_mean, track_size_std, pressure, gas_type, reference_voltage):
-    #Fitting the gain with an exponential curve
-    popt_gain, pcov_gain = curve_fit(expo, volt, adc_counts, p0=(adc_counts.min(), 35), sigma=d_adc_counts) 
+    #Fitting the GAIN with an exponential curve
+    popt_gain, pcov_gain = curve_fit(expo, volt, adc_counts, p0=(adc_counts.min(), 35), sigma=d_adc_counts)
     norm, scale = popt_gain
     #Using uncertainties in order to propagate error correctly
     norm_u = ufloat(norm, np.sqrt(pcov_gain[0][0]))
@@ -154,27 +154,52 @@ def plot_HV_scan(volt, adc_counts, d_adc_counts, resolution, d_resolution,
     print(f'Optimal parameters for GAIN having gas type: {gas_type} at P={pressure} mbar :\
             norm = {norm} +/- {np.sqrt(pcov_gain[0][0])}, scale = {scale} +/- {np.sqrt(pcov_gain[1][1])}\n')
     #Printing curve value at reference gain
-    gain =  norm_u*exp((reference_voltage-400)/scale_u)
-    print(f'----Gain at reference voltage DeltaV = {reference_voltage}: gain = {gain}-----\n')
-    #Fitting the mean track size with a line
+    gain_490 =  norm_u*exp((reference_voltage-400)/scale_u)
+    #print(f'----Gain at reference voltage DeltaV = {reference_voltage}: gain = {gain_490}-----\n')
+    #Considering the correlations between parameters for computing error? 
+    correlation_factor = 2*(pcov_gain[0][1])*(norm*(490-400)/(scale**2))*\
+                         (np.exp((490-400)/scale))**2
+    error = np.sqrt((gain_490.std_dev)**2 - correlation_factor)
+    print(f'----Gain at reference voltage DeltaV = {reference_voltage}: gain = {gain_490.nominal_value} +/- {error}-----\n')
+    '''
+    plt.figure('Fit to gain')
+    plt.title(f'Exponential fit to gain at {pressure} mbar')
+    volts = np.linspace(np.min(volt),np.max(volt),1000) #linspace for plots in function on DeltaV
+    plt.plot(volts, expo(volts, *popt_gain))
+    plt.errorbar(volt, adc_counts, yerr=d_adc_counts, marker='.', linestyle='')
+    plt.yscale('log')
+    plt.show()
+    '''
+
+    #Fitting the MEAN TRACK SIZE with a line
     popt_trk, pcov_trk = curve_fit(line, volt, track_size_mean, sigma=d_track_size_mean)
     m, q = popt_trk
     chi_line = (((track_size_mean - line(volt, *popt_trk))/d_track_size_mean)**2).sum()
     print(f'Best parameters for TRK_SIZE linear fit: {popt_trk}\n Covariance matrix:\n {pcov_trk}')
     m_u = ufloat(m, np.sqrt(pcov_trk[0][0]))
     q_u = ufloat(q, np.sqrt(pcov_trk[1][1]))
-    print(f'{np.sqrt((pcov_trk[0][0]*(reference_voltage**2))+ pcov_trk[1][1])}')
-    print(f'{2*pcov_trk[0][1]*np.sqrt(pcov_trk[0][0]*pcov_trk[1][1])}')
-    std_trk_size_reference_V = np.sqrt((pcov_trk[0][0]*(reference_voltage**2))\
-                               + pcov_trk[1][1] + 2*pcov_trk[0][1]*np.sqrt(pcov_trk[0][0]*pcov_trk[1][1]))
-    mean_trk_size_u = ufloat(m*reference_voltage + q, std_trk_size_reference_V)
-    mean_trk_size_u2 = m_u*reference_voltage + q_u
-    print(f'-------Mean track size at reference voltage DeltaV = {reference_voltage}:\
-          track_size = {mean_trk_size_u}   {mean_trk_size_u2}        {m*reference_voltage + q} +/- {std_trk_size_reference_V} with a chi^2/ndof on fit = {chi_line}/{len(track_size_mean) - 2}-----\n')
+    #Control plots for debugging. If considered debugged, they are commented
+    '''
+    plt.figure('Track size and its linear fit')
+    plt.title(f'Track size at {pressure} mbar')
+    volts = np.linspace(np.min(volt),np.max(volt),1000) #linspace for plots in function on DeltaV
+    plt.plot(volts, line(volts, *popt_trk))
+    plt.errorbar(volt, track_size_mean, marker='.', linestyle='')
+    plt.show()
+    '''
+    #Computing track size at reference gain and its uncertainty (considering correlations)
+    trk_size_490 = line(490, *popt_trk)
+    d_trk_size_490 = np.sqrt((490**2)*pcov_trk[0][0] + pcov_trk[1][1] + 2*pcov_trk[0][1]*490)
+    print(f'{m_u*490 + q_u}')
+    print(f'-------TRK_SIZE at reference voltage, V=490 V : {trk_size_490} +/- {d_trk_size_490}----------')
+    #Computing chi square (low pts number...)
+    chi = (((line(volt, *popt_trk))/(d_track_size_mean))**2).sum()
+    print(f'Chi square/ndof to fitted line: {chi/2}')
 
 
-    z = np.linspace(np.min(volt),np.max(volt),1000)
 
+    z = np.linspace(np.min(volt),np.max(volt),1000) #linspace for plots in function on DeltaV
+    
     plt.figure(1)
     plt.subplot(211)
     plt.errorbar(volt,adc_counts,yerr=d_adc_counts, fmt=marker, color=color, label=f'{gas_type}, {pressure} [mbar]')
@@ -226,7 +251,7 @@ def plot_HV_scan(volt, adc_counts, d_adc_counts, resolution, d_resolution,
     plt.ylabel('$\lambda$ [V]')
     plt.errorbar(pressure, scale, np.sqrt(pcov_gain[1][1]), 10, fmt=marker, color=color)
     plt.grid(True)
-
+    
 
 
     return scale, np.sqrt(pcov_gain[1][1])
@@ -257,7 +282,7 @@ if __name__ == '__main__':
         print(f'chi^2 = {chi2_DME}')
         w = np.linspace(600, 900, 100)
         plt.plot(w, line(w, *popt_scale), color ='tab:cyan', label=f'm = {popt_scale[0]:.6f} +/- {np.sqrt(pcov_scale[0][0]):.6f} \n q = {popt_scale[1]:.2f} +/- {np.sqrt(pcov_scale[1][1]):.2f}\n')
-        print(f'Parameters for line fitting of scale factors: m = {popt_scale[0]} +/- {np.sqrt(pcov_scale[0][0])} , q = {popt_scale[1]} +/- {np.sqrt(pcov_scale[1][1]) }\n')
+        print(f'Parameters of linear fit of scale factor lambda: m = {popt_scale[0]} +/- {np.sqrt(pcov_scale[0][0])} , q = {popt_scale[1]} +/- {np.sqrt(pcov_scale[1][1]) }\n')
         plt.legend(loc='best')
         if HV_SCAN_GAIN_ARGPARSER.parse_args().plot_true == 'True':
             plt.show()
