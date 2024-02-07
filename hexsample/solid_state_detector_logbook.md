@@ -18,7 +18,7 @@ signal triggering and smart processing logic;
 - a customized silicon sensor with appropriate geometry for mating with the ASIC pixels;
 - a simple, robust electro-mechanical integrated assembly.
 
-![Principal features of the detector](asix_features.png)
+![Principal features of the detector](/figures/asix_features.png)
 
 The multiplication does not occur as in gas detectors. Signal pixels are few, less than 10. 
 The main parameters in a detector like this one are the following:
