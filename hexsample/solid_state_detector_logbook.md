@@ -5,7 +5,7 @@ Instead of the gas as conversion stadium, a solid state conversion stadium will 
 
 ### ASIX proposal review
 
-![Scheme of the detector](asix_scheme.png)
+![Scheme of the detector](figures/asix_scheme.png)
 
 - Goal: This proposal aims at establishing new X-ray detection systems with simultaneous optimal imaging and spectral capabilities. Position and energy resolution shall be better than:
 - 10 𝝻m
@@ -40,7 +40,7 @@ First task: resolve K-lines of copper. Those lines are at:
 - 8.046 keV (principal K-$\alpha$ line)
 - 8.904 keV (principal K-$\beta$ line)
 
-![Cu forest](Cu_K_line_forest.png)
+![Cu forest](figures/Cu_K_line_forest.png)
 
 It is desirable to divide the Ka1+Ka2 from the Kb1+Kb3+Kb5. $\Delta E \simeq 880$ eV.  
 
@@ -59,6 +59,10 @@ With _charge sharing_ it is intended the process of diffusion of the cloud in th
 This effect damages signal because the electronic noise sums in quadrature:
 $$\sigma_{tot} = \sqrt{\sum_{i=1}^{N_{signal}}(\sigma_{<e>} + \sigma_{electronics})^2} $$  
 
+Where:
+- $\sigma_{<e>}$ is the uncertainty due to statistical fluctuations ($\sigma_{<e>} = 17$ [$e-$]);
+- $\sigma_{electronics}$ depends on chip readout and it is measured in ENC (Equivalen Noise Charge = signal charge in electrons that determines a $\frac{S}{N} = 1$).
+
 
 ## Analysis of MC events - defining the interesting metrics
 
@@ -70,7 +74,7 @@ The parameters of the simulation regard the silicon detector:
 Remember that we use hexagonal grids as we can see in the figure below.  
 So, if we call pitch $p$ the _vertical spacing_, then the pitch in _horizontal direction_ is $\frac{\sqrt{3}}{2}\cdot p$ (For further reading, see: [hexagon_grid_link](https://www.redblobgames.com/grids/hexagons/));  
 
-![Hexagonal grid](hexagonal_grid.png)
+![Hexagonal grid](figures/hexagonal_grid.png)
 
 - _noise_ ($N$) of every pixel in the readout custom chip [ENC].
 
@@ -103,7 +107,7 @@ Where:
 
 ## What to do next?
 - Redo computations of Carmelo and Luca: [x]
-![Measures to redo](measures.png) 
+![Measures to redo](figures/measures.png) 
 
     Measures done for both $K_{\alpha}$ and $K_{\beta}$. Plots to be done:
     - Colormap thick-noise-relative variation wrt true energy value [x] (understand how to plot more colormaps together);
@@ -122,6 +126,9 @@ In order to represent 2D plots, the 3 possible couples of parameters has been ex
 
 #### thickness-pitch space 
 In the following grid of parameters, ENC value has been set. $\text{ENC} = 40$ enc.  
+
+
+
 
 
 - Starting to think a reco algorithm? []
