@@ -136,17 +136,25 @@ The trend is the one expected:
 - as the __thickness increases__, the diffusion effect is bigger, so there are less events collected completely in a single pixel.
 
 #### Energy resolution in events with a single pixel
+Energy resolution in number of electrons is shown in the following figure:  
 
 ![f](figures/Figure_4.png)
+
 Energy resolution is around 2-3%, that corresponds to 178-267 eV for $\alpha$ peak and 160-241 eV for $\beta$ peak. It is barely constant with pitch (it is slightly better for bigger pitch but of a negligible quantity, few electrons. As written above, higher pitch means higher probability of containing the track completely. If pitch is smaller, there are more border zones where part of the signal can be lost.)
+
+The values are lower than the ones shown in the reference measures done by Luca and Carmelo. _need to understand why_
 
 #### Mean shift in events with a single pixel
 ![f](figures/Figure_3.png)
 For every value, it is negliglible for both $\alpha$ and $\beta$ (anyway always negative, that makes sense).
 
 #### Energy resolution for all events
-![f](figures/Figure_2.png)
-As for the 1 px case, energy resolution is not strongly dependent to pitch, same for mean shift, shown below:
+Energy resolution in number of electrons is shown in the following figure:  
+![f](figures/Figure_2.png)  
+
+The values are lower than the ones shown in the reference measures done by Luca and Carmelo. _need to understand why_  
+
+As for the 1 px case, energy resolution is not strongly dependent to pitch, same for mean shift, shown below.
 
 
 #### Mean shift in events with a single pixel
