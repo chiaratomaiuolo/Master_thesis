@@ -115,7 +115,7 @@ Where:
     - Add numbers in the heatmaps [x]
 
 
-### Hexsample simulation grid 
+## Hexsample simulation grid 
 The parameter space taken into consideration is _thickness-ENC-pitch_.
 
 Where:
@@ -124,11 +124,35 @@ Where:
 
 In order to represent 2D plots, the 3 possible couples of parameters has been exploited, fixing the third parameter to a reasonable value (often conservative ones).
 
-#### thickness-pitch space 
+### thickness-pitch space 
 In the following grid of parameters, ENC value has been set. $\text{ENC} = 40$ enc.  
 
+#### Fraction of events with a single px
+
+![f](figures/Figure_5.png)
+
+The trend is the one expected:
+- as the __pitch increases__, the number of events collected completely in a single pixel __increases__;
+- as the __thickness increases__, the diffusion effect is bigger, so there are less events collected completely in a single pixel.
+
+#### Energy resolution in events with a single pixel
+
+![f](figures/Figure_4.png)
+Energy resolution is around 2-3%, that corresponds to 178-267 eV for $\alpha$ peak and 160-241 eV for $\beta$ peak. It is barely constant with pitch (it is slightly better for bigger pitch but of a negligible quantity, few electrons. As written above, higher pitch means higher probability of containing the track completely. If pitch is smaller, there are more border zones where part of the signal can be lost.)
+
+#### Mean shift in events with a single pixel
+![f](figures/Figure_3.png)
+For every value, it is negliglible for both $\alpha$ and $\beta$ (anyway always negative, that makes sense).
+
+#### Energy resolution for all events
+![f](figures/Figure_2.png)
+As for the 1 px case, energy resolution is not strongly dependent to pitch, same for mean shift, shown below:
 
 
+#### Mean shift in events with a single pixel
+![f](figures/Figure_1.png)
 
+Some other metrics of interests are:
+- quantum efficiency
+- think about it. 
 
-- Starting to think a reco algorithm? []
