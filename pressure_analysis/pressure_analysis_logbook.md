@@ -234,7 +234,22 @@ The sensor is the following: https://www.mks.com/f/aa02a-heated-absolute-capacit
 
 The MKS measures in Torr, so, always remember: **1 Torr = 1.33322368 mbar**
 
-Today, we have filled the absorption chamber with Argon in order to check teh stability of the sensor (we have done a leak test before, so we rely on the sealing of the absorption chamber).
+Today, we have filled the absorption chamber with Argon in order to check the stability of the sensor (we have done a leak test before, so we rely on the sealing of the absorption chamber).
+
+9/2/2024 - At 10:37 we have changed temperature from 22 to 10 C degrees, in the evening we will come back to 22 in order to see, in monday, that the behaviour is the one expected. 
+
+#### What to do:
+The first thing is understanding how the acquisition works properly. Seems like it mediates the last 20 pts and do the mean and std dev but how the behaviour is not perfectly clear when acquisition time is changed. 
+
+- We think that we can approximate the gas as perfect. It has to be confirmed. [] 
+
+- Take initial data and look at pressure trend (seemed like it was increasing and decreasing periodically of $\pm$ 0.2 mbar with a typical time of 6-12 hours.) (Pay attention to times, bc at 10:37 of 9/2/2024 temperature has been changed) []  
+
+- Look at uncertainty values, seemed periodic but it was a by-eye assumption. In case there could be some correlation with temperature feedback of the sensor? [] 
+
+
+
+
 
 
 
