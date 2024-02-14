@@ -124,43 +124,67 @@ Where:
 
 In order to represent 2D plots, the 3 possible couples of parameters has been exploited, fixing the third parameter to a reasonable value (often conservative ones).
 
+
+### thickness-ENC space 
+First goal is to understand for which parameters it is possible to divide the $\alpha$ and $\beta$ peaks, then, we want a resolution that can divide 880 eV. 
+
+Because of that, the first quantity to look at is the energy resolution (in eV).  
+Fixing pitch at 50 $\mu \text{m}$.
+
+As measure of the energy resolution, we consider the FWHM of the fitted Gaussian peak for the energy, that is $\text{FWHM} = \sigma_E \cdot 2.35$ .
+
+In the following two figures, it is shown the FWHM for all events and events with a single pixel. 
+
+![fwhm_all](figures/fwhm_allevts.png)
+As expected:
+- __proportional to thickness__ ;
+- __proportional to ENC__.  
+- It is higher for $\alpha$ peak but it is fine bc those are absolute resolutions, $K_{\alpha}$ has a larger peak.
+
+It is necesary to set a metric and a limit for the _contamination_ of $K_{\alpha}$ on $K_{\beta}$ (or vice-versa but I think this is more incisive).
+
+![fwhm_1px](figures/fwhm_1px.png)
+
+It improves for 1px tracks as expected. 
+
+#### $\Delta = \frac{\mu_E - E_k}{E_k}$, shift of the mean from true value 
+
+In the following heatmaps, the trend for the shift of the mean from its true value is shown. In the first picture, the one for the 1px events, in the latter the one for all events: 
+
+![shift_1px](figures/mean_shift_1px.png)
+
+This figure shows the effect of the zero suppression on tracks, as a matter of fact, the zero suppression threshold is proportional to noise value: `zero_threshold = noise*SIGMA_THRESHOLD`, where `SIGMA_THRESHOLD` is set to 2.  
+This means that a part of the tracks of 1px have not completely collected the charge in a single px, instead, have lost part of the charge in another px that has been successively zero suppressed; clearly this effect is bigger for high thickness because in that case diffusion is higher and so there are few 'real' 1px tracks.  
+This could give a measure of how many tracks are effectively of 1px (assuming that this is the only contribution to mean shift, that seems reasonable and assuming that the charge lost is `zero_threshold * 0.5`, just mediating dumbly the value).
+
+At 30 ENC (that seems the limit for our electronics), we have:  
+`zero_threshold` = 60 $e-$ = 60*3.6 eV = 216.0 eV .  
+$\frac{216}{E_{K_\alpha}} = 27 \%$ , $\frac{216}{E_{K_\beta}} = 24 \%$
+
+So, a rough estimation of the 'false' 1px events could be the following:  
+- $\alpha$: $f = \frac{0.024}{0.027} = 88 \%$ for $t = 500$ $\mu\text{m}$, where 0.024 come from simulations;
+- $\beta$: $f = \frac{0.018}{0.024} = 75 \%$ for $t = 500$ $\mu\text{m}$, where 0.018 come from simulations.  
+
+Those clearly are overestimates because we are assuming that all tracks lose the maximum that they can. 
+
+The hypotesis that the shift of the mean can be explained by this phenomenon is confirmed by the trend of the mean cluster size shown below:
+![mean_clu_size](figures/mean_cluster_size.png)
+
+As we can see, the mean cluster size shrinks as noise and thickness grows, this is counterintuitive in terms of the physics but makes sense when we consider the zero suppression effect. 
+
+As another proof, looking at the shift of the mean for all events, we can see that this effect is suppressed: 
+![mean_shift_all](figures/mean_shift.png)
+That means that the effect of the tracks cut by zero suppression is mediated and approaches zero.  
+This makes sense because the events with a single pixel are << number of total events, as we can see below:
+
+#### Fraction of events of 1px
+![f_evts_1px](figures/f_1px_evtspng.png)
+
+
 ### thickness-pitch space 
 In the following grid of parameters, ENC value has been set. $\text{ENC} = 40$ enc.  
 
-#### Fraction of events with a single px
-
-![f](figures/Figure_5.png)
-
-The trend is the one expected:
-- as the __pitch increases__, the number of events collected completely in a single pixel __increases__;
-- as the __thickness increases__, the diffusion effect is bigger, so there are less events collected completely in a single pixel.
-
-#### Energy resolution in events with a single pixel
-Energy resolution in number of electrons is shown in the following figure:  
-
-![f](figures/Figure_4.png)
-
-Energy resolution is around 2-3%, that corresponds to 178-267 eV for $\alpha$ peak and 160-241 eV for $\beta$ peak. It is barely constant with pitch (it is slightly better for bigger pitch but of a negligible quantity, few electrons. As written above, higher pitch means higher probability of containing the track completely. If pitch is smaller, there are more border zones where part of the signal can be lost.)
-
-The values are lower than the ones shown in the reference measures done by Luca and Carmelo. _need to understand why_
-
-#### Mean shift in events with a single pixel
-![f](figures/Figure_3.png)
-For every value, it is negliglible for both $\alpha$ and $\beta$ (anyway always negative, that makes sense).
-
-#### Energy resolution for all events
-Energy resolution in number of electrons is shown in the following figure:  
-![f](figures/Figure_2.png)  
-
-The values are lower than the ones shown in the reference measures done by Luca and Carmelo. _need to understand why_  
-
-As for the 1 px case, energy resolution is not strongly dependent to pitch, same for mean shift, shown below.
 
 
-#### Mean shift in events with a single pixel
-![f](figures/Figure_1.png)
 
-Some other metrics of interests are:
-- quantum efficiency
-- think about it. 
-
+contributo di fano + contributo elettronico  
