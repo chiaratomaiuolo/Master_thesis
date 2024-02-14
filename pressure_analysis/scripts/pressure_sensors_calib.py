@@ -32,7 +32,7 @@ PRESSURE_MONITORING_ARGPARSER.add_argument('--logging_time', type=float, default
 PRESSURE_MONITORING_ARGPARSER.add_argument('--acquisition_time', type=float, default=10, help='acquisition\
                                            time in ms')
 
-def LabViewDataPlots(path_to_datafile: str, logging_time: float, acquisition_time: float, start_time: str, stop_time: str):
+def LabViewData(path_to_datafile: str, logging_time: float, acquisition_time: float, start_time: str, stop_time: str):
     """Performs a plot of the data from BFS taken with LabView software. 
     Goal of the analysis is, by now, the study of the stability of pressure
     inside the Absorption Chamber (AC) for inspecting absorption phenomenon. 
@@ -67,8 +67,29 @@ def LabViewDataPlots(path_to_datafile: str, logging_time: float, acquisition_tim
     if start_time and stop_time is not None:
         #Creating mask based on time, comparing start and stop time to timestamp
         start_time = datetime.strptime(start_time, "%H:%M:%S.%f")
+        stop_time = datetime.strptime(stop_time, "%H:%M:%S.%f")
         mask = (timestamp_hour > start_time) & (timestamp_hour < stop_time)
-        
+        T5 = T5[mask]
+        P5 = P5[mask]
+    
+    #Plotting pressure variations and temperature variations
+    fig, axs = plt.subplots(2)
+    fig.suptitle('Pressure variations inside AC and corresponding temperature variations')
+    axs[0].plot(timestamp_hour[1:], np.diff(P5.astype(float)), color='red')
+    axs[0].set(xlabel=r'Timestamp', ylabel=r'$\Delta P_5$ [mbar]')
+    axs[1].plot(timestamp_hour[1:], np.diff(T5.astype(float)))
+    axs[1].set(xlabel=r'Timestamp', ylabel=r'$\Delta T_5$ [°C]')
+
+    fig, axs = plt.subplots(2)
+    fig.suptitle('Pressure variations inside AC and corresponding temperature variations')
+    axs[0].plot(timestamp_hour, P5.astype(float), color='red')
+    axs[0].set(xlabel=r'Timestamp', ylabel=r'$P_5$ [mbar]')
+    axs[1].plot(timestamp_hour, T5.astype(float))
+    axs[1].set(xlabel=r'Timestamp', ylabel=r'$T_5$ [°C]')
+
+    plt.show()
+
+
 
     #mask = timestamp_hour
     #print(timestamp_day)
@@ -80,4 +101,4 @@ def LabViewDataPlots(path_to_datafile: str, logging_time: float, acquisition_tim
 
 if __name__ == "__main__":
     args = PRESSURE_MONITORING_ARGPARSER.parse_args()
-    LabViewDataPlots(**vars(PRESSURE_MONITORING_ARGPARSER.parse_args()))
+    LabViewData(**vars(PRESSURE_MONITORING_ARGPARSER.parse_args()))
