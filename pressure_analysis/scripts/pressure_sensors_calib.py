@@ -1,3 +1,4 @@
+import argparse
 from datetime import datetime
 
 import numpy as np 
@@ -11,8 +12,27 @@ from scipy.optimize import curve_fit
 #P1 - Setra Filling (mbar)	P2 - Omega AC (mbar)	P3 - Omega GTC (mbar)	PressFullrange (mbar)
 #P4 - MKS AC (mbar)	P5 - MKS GPD (mbar)
 
+__description__ = \
+""" 
+    
+"""
 
-def LabViewDataPlots(path_to_file: str, logging_time: float, acquisition_time: float, start_time: str, stop_time: str):
+# Parser object.
+PRESSURE_MONITORING_ARGPARSER = argparse.ArgumentParser(description=__description__)
+PRESSURE_MONITORING_ARGPARSER.add_argument('path_to_datafile', type=str, help='Absolute\
+                                           path to data file')
+PRESSURE_MONITORING_ARGPARSER.add_argument('--start_time', type=str, default=None, help='String\
+                                           containing the starting time from which pressure and\
+                                           temperature are plot')
+PRESSURE_MONITORING_ARGPARSER.add_argument('--stop_time', type=str, default=None, help='String\
+                                           containing the stopping time to which pressure and\
+                                           temperature are plot')
+PRESSURE_MONITORING_ARGPARSER.add_argument('--logging_time', type=float, default=5000, help='logging\
+                                           time in ms')
+PRESSURE_MONITORING_ARGPARSER.add_argument('--acquisition_time', type=float, default=10, help='acquisition\
+                                           time in ms')
+
+def LabViewDataPlots(path_to_datafile: str, logging_time: float, acquisition_time: float, start_time: str, stop_time: str):
     """Performs a plot of the data from BFS taken with LabView software. 
     Goal of the analysis is, by now, the study of the stability of pressure
     inside the Absorption Chamber (AC) for inspecting absorption phenomenon. 
@@ -39,12 +59,25 @@ def LabViewDataPlots(path_to_file: str, logging_time: float, acquisition_time: f
 
     """
     #Opening data file and unpacking columns
-    timestamp, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange, P4, P5 = np.loadtxt(f'{path_to_file}', unpack=True)
-    #Creating mask based on time, comparing start and stop time to timestamp
-    timestamp = datetime.strptime(timestamp, "%Y/%m/%d %H:%M:%S")
-    print(timestamp)
+    timestamp_day, timestamp_hour, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange, P4, P5 = np.loadtxt(f'{path_to_datafile}', dtype=str, unpack=True)
+    #Converting timestamps into datetime type in order to compare times between each data object
+    timestamp_day = np.array([datetime.strptime(date, "%Y-%m-%d") for date in timestamp_day])
+    timestamp_hour = np.array([datetime.strptime(hour, "%H:%M:%S.%f") for hour in timestamp_hour])
+    #If there are time limits, use them for constructing time mask
+    if start_time and stop_time is not None:
+        #Creating mask based on time, comparing start and stop time to timestamp
+        start_time = datetime.strptime(start_time, "%H:%M:%S.%f")
+        mask = (timestamp_hour > start_time) & (timestamp_hour < stop_time)
+        
+
+    #mask = timestamp_hour
+    #print(timestamp_day)
+    print(timestamp_hour)
 
     return
 
 
 
+if __name__ == "__main__":
+    args = PRESSURE_MONITORING_ARGPARSER.parse_args()
+    LabViewDataPlots(**vars(PRESSURE_MONITORING_ARGPARSER.parse_args()))
