@@ -117,9 +117,9 @@ def LabViewdata_reading(paths_to_datafile: list[str], start_times: list[str], st
     return [timestamp, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange, P4, P5]
 
 if __name__ == "__main__":
-    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-07_1222.txt',\
-                    '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-07_1246.txt']
-    start_times = ['2024-02-07 12:44:33.707', '2024-02-07 16:31:25.989']
+    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-12_1226.txt',\
+                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-13_0000.txt']
+    start_times = ['2024-02-12 16:00:00.000', None]
     stop_times = [None, None]
     data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
     timestamps = data_list[0]
@@ -128,17 +128,21 @@ if __name__ == "__main__":
 
     #Plotting pressure variations and temperature variations
     fig, axs = plt.subplots(2)
-    fig.suptitle('Pressure variations inside AC and corresponding temperature variations')
+    fig.suptitle(r'Consecutive pressure variations inside AC and corresponding temperature variations - Gas DME, $T_{Julabo}$ = 22° C')
     axs[0].plot(timestamps[1:], np.diff(P4.astype(float)), color='red')
     axs[0].set(xlabel=r'Timestamp', ylabel=r'$\Delta P_4$ [mbar]')
+    axs[0].grid(True)
     axs[1].plot(timestamps[1:], np.diff(T5.astype(float)))
     axs[1].set(xlabel=r'Timestamp', ylabel=r'$\Delta T_5$ [°C]')
+    axs[1].grid(True)
 
     fig, axs = plt.subplots(2)
-    fig.suptitle('Pressure variations inside AC and corresponding temperature variations')
-    axs[0].plot(timestamps, P4.astype(float), color='red')
+    fig.suptitle(r'Absolute pressure inside AC and corresponding temperature - Gas DME, $T_{Julabo}$ = 22° C')
+    axs[0].plot(timestamps, P4.astype(float), color='firebrick')
     axs[0].set(xlabel=r'Timestamp', ylabel=r'$P_4$ [mbar]')
+    axs[0].grid(True)
     axs[1].plot(timestamps, T5.astype(float))
     axs[1].set(xlabel=r'Timestamp', ylabel=r'$T_5$ [°C]')
+    axs[1].grid(True)
 
     plt.show()
