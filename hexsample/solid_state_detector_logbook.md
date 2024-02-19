@@ -184,6 +184,23 @@ This makes sense because the events with a single pixel are << number of total e
 ### thickness-pitch space 
 In the following grid of parameters, ENC value has been set. $\text{ENC} = 40$ enc.  
 
+## How to evaluate the best values
+The first key problem is the evaluation of the reciprocal contamination of the two curves. In order to obtain the best efficiency on signal (both $\alpha$ and $\beta$) with the lowest contamination between the two curves.  
+The standard possibilities are three:
+- Fixing the _contamination_ and look at the correspondent _efficiency_ value;
+- Fixing the _efficiency_ and look at the correspondent _contamination_ value;
+- Minimizing the _Gini index_. 
+
+Those three does not seem the right choice for our scopes, for different reasons:
+- Fixing a threshold could guarantee some standards but it is not possible to find the _best_, because there is no metric to minimize or maximize;
+- The Gini index minimization is not what we are searching for, it looks for the minimum impurity inside each group but when the two groups are too close, it results in merging the $\beta$ elements into $\alpha$ peak, because there is no the concept of misclassification inside it, only the idea of impurity inside groups, no matter of which type. 
+
+So, by now, maybe the first methods are better because guarantee a certain efficiency or contamination. Maybe I could span all MCs fixing the efficiency and looking for minimum contamination.  
+
+What we could seach for is a metric that has the concept of misclassification inside, such as _accuracy_ or _precision_. 
+
+
+
 
 
 
