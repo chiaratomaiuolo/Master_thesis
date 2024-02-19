@@ -118,12 +118,17 @@ def LabViewdata_reading(paths_to_datafile: list[str], start_times: list[str], st
 
 if __name__ == "__main__":
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-12_1226.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-13_0000.txt']
-    start_times = ['2024-02-12 16:00:00.000', None]
-    stop_times = [None, None]
+                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-13_0000.txt',\
+                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-14_0000.txt',\
+                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-15_0000.txt',\
+                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-15_1525.txt',\
+                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-15_1546.txt']
+    start_times = ['2024-02-12 16:00:00.000', None, None, None, None, None]
+    stop_times = [None, None, None, None, None, None]
     data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
     timestamps = data_list[0]
     T5 = data_list[6]
+    T6 = data_list[7]
     P4 = data_list[15]
 
     #Plotting pressure variations and temperature variations
@@ -136,7 +141,7 @@ if __name__ == "__main__":
     axs[1].set(xlabel=r'Timestamp', ylabel=r'$\Delta T_5$ [°C]')
     axs[1].grid(True)
 
-    fig, axs = plt.subplots(2)
+    fig, axs = plt.subplots(3)
     fig.suptitle(r'Absolute pressure inside AC and corresponding temperature - Gas DME, $T_{Julabo}$ = 22° C')
     axs[0].plot(timestamps, P4.astype(float), color='firebrick')
     axs[0].set(xlabel=r'Timestamp', ylabel=r'$P_4$ [mbar]')
@@ -144,5 +149,6 @@ if __name__ == "__main__":
     axs[1].plot(timestamps, T5.astype(float))
     axs[1].set(xlabel=r'Timestamp', ylabel=r'$T_5$ [°C]')
     axs[1].grid(True)
+    axs[2].plot(timestamps, T6, color='red')
 
     plt.show()
