@@ -32,7 +32,7 @@ def vdc_line(x, m, q):
 if __name__ == "__main__":
     popt, pcov = curve_fit(vdc_line, V_762479, p_uut_762479*from_psi_to_mbar, p0=[100.*from_psi_to_mbar, 0.])
     m_opt, q_opt = popt
-    print(f'Slope = {m_opt} +/- {np.sqrt(pcov[0][0])}, Zero offset = {q_opt} +/- {np.sqrt(pcov[1][1])}')
+    print(f'Slope = {m_opt} +/- {np.sqrt(pcov[0][0])}, Zero offset = {q_opt*m_opt} +/- {np.sqrt((pcov[0][0]*q_opt)**2 + (pcov[1][1]*m_opt)**2)}')
 
     plt.figure()
     z = np.linspace(0, 5, 1000)
