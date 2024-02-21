@@ -77,42 +77,30 @@ def LabViewdata_reading(paths_to_datafile: list[str], start_times: list[str], st
         #Converting timestamps to datatime in order to compare data
         timestamp_tmp = np.array([str(date) + ' ' + str(hour) for date, hour in zip(timestamp_day_tmp, timestamp_hour_tmp)])
         timestamp_tmp = np.array([datetime.strptime(timestp, "%Y-%m-%d %H:%M:%S.%f") for timestp in timestamp_tmp])
-        print(len(timestamp_tmp))
         if start_times[idx] is not None:
-            print('entering line 82')
             #start_times[idx] should be a list, in order, if necessary, to select multiple 
             #intervals in a same datafile
             #turning timestamp into datetime in order to compare it with timestamps
             mask = [False]*len(timestamp_tmp)
             for t_idx, t_start in enumerate(start_times[idx]):
-                print(t_start)
                 start_time = datetime.strptime(t_start, "%Y-%m-%d %H:%M:%S.%f")
                 if stop_times[idx][t_idx] is not None:
-                    print('entering line 91')
                     #For every element in the list, the mask is constructed
                     #turning timestamp into datetime in order to compare it with timestamps
                     stop_time = datetime.strptime(stop_times[idx][t_idx], "%Y-%m-%d %H:%M:%S.%f")
                     #need to cut on start and stop
                     mask = np.logical_or(mask, ((timestamp_tmp >= start_time) & (timestamp_tmp <= stop_time)))
-                    print(len(mask))
-                    print(len(timestamp))
                 else:
-                    print('entering line 100')
                     #need to cut only on start
-                    print(len(mask))
-                    print(len(timestamp_tmp))
                     mask = np.logical_or(mask, (timestamp_tmp >= start_time))
         else:
-            print('entering line 106')
             mask = [False]*len(timestamp_tmp)
             if stop_times[idx] is not None:
-                print('entering line 109')
                 #turning timestamp into datetime in order to compare it with timestamps
                 stop_time = datetime.strptime(stop_times[idx], "%Y-%m-%d %H:%M:%S.%f")
                 #Need to cut only on stop
                 mask = np.logical_or(mask, (timestamp_tmp <= stop_time))
             else:
-                print('entering line 116')
                 #no cuts, taking all data of the dataset. Creating mask with all true
                 mask = [True]*len(timestamp_tmp)
         #Filling lists containing interesting data 
@@ -133,7 +121,6 @@ def LabViewdata_reading(paths_to_datafile: list[str], start_times: list[str], st
         PressFullrange = np.append(PressFullrange, PressFullrange_tmp[mask].astype(float))
         P4 = np.append(P4, P4_tmp[mask].astype(float))
         P5 = np.append(P5, P5_tmp[mask].astype(float))
-        print('End of transaction... next file')
 
     dP4 = np.array([uncertainty_computation(p) for p in P4])
     timestamps_diff = np.array([(tmstp.timestamp() - timestamp[0].timestamp()) for tmstp in timestamp]).astype(float) #difference from the starting pt in s
@@ -146,61 +133,34 @@ def expo(x, A0, tau, c):
     return A0*(np.exp(-x/tau)) + c
 
 if __name__ == "__main__":
-    
-    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-12_1226.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-13_0000.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-14_0000.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-15_0000.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-15_1525.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-15_1546.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-16_0000.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-16_1442.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-16_1453.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-16_1454.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-16_1500.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-16_1807.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-16_1811.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-17_0000.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-18_0000.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-19_0000.txt']
-    
-    
-    start_times = [['2024-02-12 16:00:00.000'], None, None, None, None, None, None,
-                   None, None, None, None, None, None, None, None, None, None]
-    stop_times = [[None], None, None, None, None, None, None, None, None, None,
-                  '2024-02-12 16:00:00.000', None, None, None, None, None]
-    data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
-    
+    #Datafiles are briefly descripted above their pathfile line. 
+    #Select the interested one and comment the other paths_to_data, start_times, stop_times
     '''
-    start_times = ['2024-02-12 16:00:00.000', '2024-02-13 16:30:00.000', '2024-02-14 16:00:00.000',
-                   '2024-02-15 16:00:00.000', '2024-02-15 16:00:00.000', '2024-02-15 16:00:00.000',
-                   '2024-02-16 16:00:00.000', '2024-02-16 16:00:00.000', '2024-02-16 16:00:00.000', 
-                   '2024-02-16 16:00:00.000', '2024-02-16 16:00:00.000', '2024-02-16 16:00:00.000', \
-                    '2024-02-16 16:00:00.000', '2024-02-17 16:00:00.000', '2024-02-18 16:00:00.000', '2024-02-19 16:00:00.000']
-    stop_times = ['2024-02-12 20:00:00.000', '2024-02-13 15:00:00.000', '2024-02-14 15:00:00.000',
-                   '2024-02-15 20:00:00.000', '2024-02-15 20:00:00.000', '2024-02-15 20:00:00.000',
-                   '2024-02-16 20:00:00.000', '2024-02-16 20:00:00.000', '2024-02-16 20:00:00.000', 
-                   '2024-02-16 20:00:00.000', '2024-02-16 15:00:00.001', '2024-02-16 20:00:00.001', \
-                    '2024-02-16 20:00:00.001', '2024-02-17 20:00:00.000', '2024-02-18 20:00:00.000', '2024-02-19 20:00:00.000']
-    '''
-    '''
-
-    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-19_1550.txt',\
-                    '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-20_0000.txt']
-    start_times = ['2024-02-19 16:20:00.000', None]
-    stop_times = [None, '2024-02-20 12:37:00.000']
-    '''
-    '''
-    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-09_0000.txt',\
-                     '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-09_1612.txt']
-    start_times = ['2024-02-9 10:37:00.000', '2024-02-9 16:00:00.000']
-    stop_times = [None, '2024-02-9 16:00:00.000']
-    '''
-    '''
-    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-19_1106.txt']
-    start_times = ['2024-02-19 13:30:00.000']
+    #Datafile from 12/2/2024 to 20/2/2024 - AC N2 filled.
+    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_N2_measurements.txt']
+    #Datafile from 12/2/2024 to 20/2/2024 - AC N2 filled.
+    start_times = [None]
     stop_times = [None]
     '''
+    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled.
+    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
+    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selected times intervals where T_ambient is stable.
+    
+    start_times = [['2024-02-12 16:00:00.000', '2024-02-13 16:30:00.000', '2024-02-14 16:00:00.000',\
+                   '2024-02-15 16:00:00.000', '2024-02-16 16:00:00.000','2024-02-17 16:00:00.000',\
+                    '2024-02-18 16:00:00.000', '2024-02-19 16:00:00.000']]
+    stop_times = [['2024-02-12 20:00:00.000', '2024-02-13 15:00:00.000', '2024-02-14 15:00:00.000',\
+                   '2024-02-15 20:00:00.000','2024-02-16 16:00:00.001', '2024-02-17 20:00:00.000', \
+                   '2024-02-18 20:00:00.000', '2024-02-19 20:00:00.000']]
+    
+    '''
+    start_times = [['2024-02-12 18:00:00.001']]
+    stop_times = [['2024-02-20 12:30:00.000']]
+    '''
+    
+    #Obtaining arrays of data
+    data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
+
     #Obtaining interesting data
     data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
     timestamps = data_list[0]
@@ -211,7 +171,6 @@ if __name__ == "__main__":
     P3 = data_list[13]
     TJ = data_list[9]
     t_diffs = data_list[18] #s 
-    print(f'Mean value of P3 in vacuum: {np.mean(P3)}')
     
 
     #Plotting pressure variations and temperature variations
@@ -251,6 +210,8 @@ if __name__ == "__main__":
     z = np.linspace(0, 200, 100000)
     plt.plot(z, expo(z, *popt), color='steelblue')
     plt.errorbar(t_diffs/3600, P4, yerr= dP4, marker='.', linestyle='', color='firebrick')
+    plt.xlabel('Time [hours]')
+    plt.ylabel(r'$P_4$ [mbar]')
     plt.grid()
 
     '''
