@@ -267,6 +267,13 @@ The first cycle of measurements has been performed from 12-2-2024 to 19-2-2024 a
 
 ![pressure trends](plots/p4_trend.png)
 
+As we can see, the oscillations in pressure are influenced by room temperature even if the termoregolator Julabo is on and set to a similar temperature. It is evident that the room temperature has a period of ~24 h, in particular when the air conditioned is turned off (from 22 to 5 h), the temperature has a steep rise (air is still and well-insulated).
+
+We have performed an exponential fit, on both full dataset and in a selected subsets of data, taking into consideration only data that correspond to a stable room temperature (by eye). 
+
+The results are reported below:
+
+
 
 - Trying to fit only daily peaks. 
 - Selection of data on hours where ambient temperature is stable (between 16 and 20)
