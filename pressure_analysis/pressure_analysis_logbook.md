@@ -248,6 +248,31 @@ The first thing is understanding how the acquisition works properly. Seems like 
 - Look at uncertainty values, seemed periodic but it was a by-eye assumption. In case there could be some correlation with temperature feedback of the sensor? [] 
 
 
+## AC DME filled from 12-2-2024
+
+AC has been filled with non-purified DME. The main idea is to study the pressure changes due to surfaces absorption of the gas.  
+The process has been classufied, by now, as reversible with heat, that means that no chemical reaction occurs, the molecula of the gas just approach the surfaces and attach to them without being transformed in any other compound.  
+
+Considering those premises, the cycle of measurements will be the following:
+
+- A first observation of pressure trend in DME setting $T_{Julabo} = 22° \text{C}$ (that is, barely at ambient temperature);
+
+A decrease in pressure is expected, with a __transient__ and an __asymptotic value__ to be estimated.
+
+- In order to assess the reversibility of the absorption, DME will be heated to $T_{Julabo} = 40° \text{C}$ (note that an higher temperature cannot be chosen in order to guarantee the good operation of the MKS sensor, that has an operation temperature and so a self-temperature feedback at $45° \text{C}$)
+
+- After pressure stabilization at high temperature, the temperature will be set again to ambient one: $T_{Julabo} = 22° \text{C}$, in order to see if the behaviour is the same as the one before absorption.  
+
+The first cycle of measurements has been performed from 12-2-2024 to 19-2-2024 at 11 AM.  
+
+![pressure trends](plots/p4_trend.png)
+
+
+- Trying to fit only daily peaks. 
+- Selection of data on hours where ambient temperature is stable (between 16 and 20)
+
+
+
 
 
 
