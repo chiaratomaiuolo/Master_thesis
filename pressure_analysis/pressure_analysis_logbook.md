@@ -255,14 +255,15 @@ The process has been classufied, by now, as reversible with heat, that means tha
 
 Considering those premises, the cycle of measurements will be the following:
 
-- A first observation of pressure trend in DME setting $T_{Julabo} = 22° \text{C}$ (that is, barely at ambient temperature);
+1. A first observation of pressure trend in DME setting $T_{Julabo} = 22° \text{C}$ (that is, barely at ambient temperature);
 
 A decrease in pressure is expected, with a __transient__ and an __asymptotic value__ to be estimated.
 
-- In order to assess the reversibility of the absorption, DME will be heated to $T_{Julabo} = 40° \text{C}$ (note that an higher temperature cannot be chosen in order to guarantee the good operation of the MKS sensor, that has an operation temperature and so a self-temperature feedback at $45° \text{C}$)
+2. In order to assess the reversibility of the absorption, DME will be heated to $T_{Julabo} = 40° \text{C}$ (note that an higher temperature cannot be chosen in order to guarantee the good operation of the MKS sensor, that has an operation temperature and so a self-temperature feedback at $45° \text{C}$)
 
-- After pressure stabilization at high temperature, the temperature will be set again to ambient one: $T_{Julabo} = 22° \text{C}$, in order to see if the behaviour is the same as the one before absorption.  
+3. After pressure stabilization at high temperature, the temperature will be set again to ambient one: $T_{Julabo} = 22° \text{C}$, in order to see if the behaviour is the same as the one before absorption.  
 
+#### 1. Measurements with $T_{Julabo} = 22°C$
 The first cycle of measurements has been performed from 12-2-2024 to 19-2-2024 at 11 AM.  
 
 ![pressure trends](plots/p4_trend.png)
@@ -273,8 +274,39 @@ We have performed an exponential fit, on both full dataset and in a selected sub
 
 The results are reported below:
 
+![DME full dataset](plots/DME_fulldataset_fit.png)
+
+As we can see, if we take the full dataset, the optimal starting point is not well predicted (it is at 1201 mbar, the pressure imposed when filled): 
+Optimal parameters:  
+- $P_0 = 9.497 \pm 0.055$ [mbar],
+- $\tau = 61.57 +/- 0.50$ [hours],
+- $c = 1194.471+/- 0.016$ [mbar].  
+
+With $\chi^2/\text{ndof} =32680578/161789$ .
+
+After this trial, we have selected by eye time zones where ambient temperature was stable in the order of $\pm 0.3°C$:
+
+![DME selected dataset](plots/DME_selecteddata_fit.png)
+Optimal parameters:  
+- $P_0 = 6.4863 \pm 0.0069$ [mbar],
+- $\tau = 80.89 +/- 0.19$ [hours],
+- $c = 1193.7425+/- 0.055$ [mbar]  
+
+With $\chi^2/\text{ndof} = 3214/8637$ (I think this is pretty low bc measures are pretty near and can be 'reduced' to single pts and pts near 0 hours have pretty big uncertainty).
+
+In summary, we are seeing an absorption that reduces the pressure inside the gas with a characteristic time $\tau \simeq 81 \text{ hours} \simeq 3.4 \text{ days}$.  
+
+-----------------------------
+**Think about it**
+- look at V/S ratios of the absorption chamber, compare with the IXPE detector ones. It is possible to link some of the parameters to those quatities? How? 
+-----------------------------
 
 
+#### 2. Measurements with $T_{Julabo} = 40°C$
+The absorption is expected to be reversible, bc
+
+
+----------------------------------------
 - Trying to fit only daily peaks. 
 - Selection of data on hours where ambient temperature is stable (between 16 and 20)
 
