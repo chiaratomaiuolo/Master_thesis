@@ -142,8 +142,10 @@ if __name__ == "__main__":
     start_times = [None]
     stop_times = [None]
     '''
+    
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled.
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
+    '''
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selected times intervals where T_ambient is stable.
     
     start_times = [['2024-02-12 16:00:00.000', '2024-02-13 16:30:00.000', '2024-02-14 16:00:00.000',\
@@ -154,9 +156,10 @@ if __name__ == "__main__":
                    '2024-02-18 20:00:00.000', '2024-02-19 20:00:00.000']]
     
     '''
+    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, full dataset selection
     start_times = [['2024-02-12 18:00:00.001']]
     stop_times = [['2024-02-20 12:30:00.000']]
-    '''
+    
     
     #Obtaining arrays of data
     data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
@@ -203,7 +206,10 @@ if __name__ == "__main__":
     print(f'Optimal parameters: P0 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\
           tau = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\
           c = {popt[2]} +/- {np.sqrt(pcov[2][2])} [mbar]')
-    t_year = 0.5*365*24*60*60 #1year time in seconds
+    t_year = 5*popt[1] #5 times characteristic time
+    chisq = (((P4 - expo(t_diffs/3600, *popt))/(dP4))**2).sum()
+    ndof = len(P4) - len(popt)
+    print(f'chisq/ndof = {chisq}/{ndof}')
     print(f'Estimation of the asymptotic value: {expo(t_year,*popt)}')
     plt.figure()
     plt.title(r'$P_4$ as a function of time from DME filling')
