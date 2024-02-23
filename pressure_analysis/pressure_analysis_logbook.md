@@ -315,9 +315,22 @@ As we can notice zooming in $P_4$, its trend is, as in other cases, influenced b
 This plot can give us multiple informations, given the hypotesis (confirmed by trends) that $T_5$ is constant (it oscillates in a range of $\pm 0.1 °C$):
 - Is it possible to estimate the time lag of the changing in room temperature and the changing in $P_4$, that is ~3.5 min. 
 
-----------------------------------------
-- Trying to fit only daily peaks. 
-- Selection of data on hours where ambient temperature is stable (between 16 and 20)
+- It is possible to estimate a weight of contribution to pressure changings due to $T_{room}$ comparing the expected pressure change with perfect gas rule in case of 100% contribution of $T_{room}$ on AC temperature and the effective pressure shift measured. It results in a contribution from room temperature of the 16%.
+
+
+#### 3. Re-setting $T_{Julabo} = 22°C$ - temperature decreasing
+
+As already mentioned, if the absorption phenomenon was completely (or, to a greater extent) reversible, the decreasing in pressure should have evidentiate a stability phase around the starting pressure $P_4(t=0) = 1201 \text{ mbar}$.  
+In the following plots, the decreasing in AC temperature (and so in pressure) is shown:
+![DME_temp_decreasing](plots/DME_t_decreasing.png)
+
+![DME_temp_decreasing_zoom](plots/DME_t_decreasing_zoom.png)
+
+As we can see, there is not impasse around 1201 mbar, pressure went a bit lower than its last stable value at $T_{Julabo} = 22°C$: $P(\text{last stable before T up)} - P(\text{first stable after T down}) = 0.28$ mbar; even if over sensor resolution, $T_{room}$ when the temperature was set down to 22°C was slightly lower (few decimal of a degree), this could justify the small lag.  
+
+
+
+
 
 
 
