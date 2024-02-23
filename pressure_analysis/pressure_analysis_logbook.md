@@ -295,16 +295,25 @@ Optimal parameters:
 With $\chi^2/\text{ndof} = 3214/8637$ (I think this is pretty low bc measures are pretty near and can be 'reduced' to single pts and pts near 0 hours have pretty big uncertainty).
 
 In summary, we are seeing an absorption that reduces the pressure inside the gas with a characteristic time $\tau \simeq 81 \text{ hours} \simeq 3.4 \text{ days}$.  
+After 6 days, (from 12/2 to 18/2) pressure was down to $P = 1194.8$ [mbar]
 
------------------------------
-**Think about it**
+**To-think about**
 - look at V/S ratios of the absorption chamber, compare with the IXPE detector ones. It is possible to link some of the parameters to those quatities? How? 
 -----------------------------
 
 
 #### 2. Measurements with $T_{Julabo} = 40°C$
-The absorption is expected to be reversible, bc
+The absorption is expected to be reversible, so heating the chamber should reverse the phenomenon; in coming back to the room temperature, if the process is 100% reversible, the descending curve should be the same as the one above.  
 
+The measurements taken at $T_{Julabo} = 40°C$ are the following:  
+
+![DME temperature rising](plots/DME_t_rising.png)
+
+As we can notice zooming in $P_4$, its trend is, as in other cases, influenced by the room temperature. In order to estimate the effects of room on the AC, we consider the following enhancement of the trend:
+![DME temperature rising](plots/p4_enhancement.png)
+
+This plot can give us multiple informations, given the hypotesis (confirmed by trends) that $T_5$ is constant (it oscillates in a range of $\pm 0.1 °C$):
+- Is it possible to estimate the time lag of the changing in room temperature and the changing in $P_4$, that is ~3.5 min. 
 
 ----------------------------------------
 - Trying to fit only daily peaks. 
