@@ -145,20 +145,32 @@ if __name__ == "__main__":
     
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled.
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
-    '''
-    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selected times intervals where T_ambient is stable.
     
+    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selected times intervals where T_ambient is stable.
+    '''
     start_times = [['2024-02-12 16:00:00.000', '2024-02-13 16:30:00.000', '2024-02-14 16:00:00.000',\
                    '2024-02-15 16:00:00.000', '2024-02-16 16:00:00.000','2024-02-17 16:00:00.000',\
-                    '2024-02-18 16:00:00.000', '2024-02-19 16:00:00.000']]
+                    '2024-02-18 16:00:00.000']]
     stop_times = [['2024-02-12 20:00:00.000', '2024-02-13 15:00:00.000', '2024-02-14 15:00:00.000',\
                    '2024-02-15 20:00:00.000','2024-02-16 16:00:00.001', '2024-02-17 20:00:00.000', \
-                   '2024-02-18 20:00:00.000', '2024-02-19 20:00:00.000']]
+                   '2024-02-18 20:00:00.000']]
+    '''
     
     '''
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, full dataset selection
     start_times = [['2024-02-12 18:00:00.001']]
     stop_times = [['2024-02-20 12:30:00.000']]
+    '''
+    
+    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selection of data having T_Julabo = 40 C (RISING)
+    start_times = [['2024-02-19 11:30:00.000']]
+    stop_times = [['2024-02-19 16:20:00.000']]
+    '''
+    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selection of data having T_Julabo from 40 to 22 C (DECREASING)
+    start_times = [['2024-02-19 16:20:00.000']]
+    stop_times = [['2024-02-20 12:30:00.000']
+    '''
+    
     
     
     #Obtaining arrays of data
@@ -200,32 +212,51 @@ if __name__ == "__main__":
     axs[2].grid(True)
 
     #Fitting absolute pressure with a single exponential
-    acq_time = 100e-3 #s
+    t_hours = t_diffs/3600 #hours
     #t = np.array([acq_time*i for i in range(len(timestamps))])
-    popt, pcov = curve_fit(expo, t_diffs/3600, P4, p0=[5.75, 20., 1194.], sigma = dP4)
+    popt, pcov = curve_fit(expo, t_hours, P4, p0=[5.75, 20., 1194.], sigma = dP4)
     print(f'Optimal parameters: P0 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\
           tau = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\
           c = {popt[2]} +/- {np.sqrt(pcov[2][2])} [mbar]')
     t_year = 5*popt[1] #5 times characteristic time
-    chisq = (((P4 - expo(t_diffs/3600, *popt))/(dP4))**2).sum()
+    chisq = (((P4 - expo(t_hours, *popt))/(dP4))**2).sum()
     ndof = len(P4) - len(popt)
     print(f'chisq/ndof = {chisq}/{ndof}')
     print(f'Estimation of the asymptotic value: {expo(t_year,*popt)}')
     plt.figure()
     plt.title(r'$P_4$ as a function of time from DME filling')
-    z = np.linspace(0, 200, 100000)
+    z = np.linspace(0, max(t_hours), 2000)
     plt.plot(z, expo(z, *popt), color='steelblue')
-    plt.errorbar(t_diffs/3600, P4, yerr= dP4, marker='.', linestyle='', color='firebrick')
+    plt.errorbar(t_hours, P4, yerr= dP4, marker='.', linestyle='', color='firebrick')
     plt.xlabel('Time [hours]')
     plt.ylabel(r'$P_4$ [mbar]')
     plt.grid()
 
-    '''
-    plt.figure()
-    plt.plot(timestamps, P3)
-    plt.xlabel(r'Timestamp')
-    plt.ylabel(r'$P_3$ [mbar]')
-    plt.grid()
-    '''
+    fig, ax1 = plt.subplots()
+    #Cutting on time interval - both times and all the other interesting quantities
+    mask = (t_hours>2.5) & (t_hours< 4.2)
+    P4 = P4[mask]
+    T6 = T6[mask]
+    T5 = T5[mask]
+    t_hours = t_hours[mask]
+    #Computing index for performing the time shift of 216 seconds
+    log_time = 5000e-3 #s
+    delay_Troom_Tgas = 216 #s #computed 'by hand'
+    delay_idx_start = int(np.floor(delay_Troom_Tgas/log_time)) #index for translating P4 forward of 216 s
+    delay_idx_stop = len(P4) - (delay_idx_start) #index for cutting the last 216 seconds of measures (for arrays compatibility)
 
+    ax1.set_xlabel('Time from new $T_{Julabo}$ settings [hours]')
+    ax1.set_ylabel(fr'$P_4$ [mbar]')
+    ax1.plot(t_hours, P4, color='red', label=r'$P_4$ [mbar]')
+    ax1.plot(t_hours[:delay_idx_stop], P4[delay_idx_start:], color='green', label=r'$P_4$ [mbar]')
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    ax2.set_ylabel(r'$T_{ambient} - T_5$ [°C]', color='steelblue')
+    ax2.plot(t_hours, (T6-T5), linestyle = 'dotted', color='steelblue', label=r'$T_{ambient} - T_5$')
+    ax2.tick_params(axis='y', labelcolor='steelblue')
+
+    fig.tight_layout()
+    fig.legend()
+
+    
     plt.show()
