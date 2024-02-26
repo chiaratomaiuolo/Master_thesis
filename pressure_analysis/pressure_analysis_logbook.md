@@ -263,6 +263,8 @@ A decrease in pressure is expected, with a __transient__ and an __asymptotic val
 
 3. After pressure stabilization at high temperature, the temperature will be set again to ambient one: $T_{Julabo} = 22° \text{C}$, in order to see if the behaviour is the same as the one before absorption.  
 
+4. The same procedure described in pts 2-3 will be repeated for $T_{Julabo} = 10°C$.
+
 #### 1. Measurements with $T_{Julabo} = 22°C$
 The first cycle of measurements has been performed from 12-2-2024 to 19-2-2024 at 11 AM.  
 
@@ -284,7 +286,7 @@ Optimal parameters:
 
 With $\chi^2/\text{ndof} =32680578/161789$ .
 
-After this trial, we have selected by eye time zones where ambient temperature was stable in the order of $\pm 0.3°C$:
+After this trial, we have selected by eye time zones where ambient temperature was stable in the order of $\pm 0.3°C$ (we have chosen the time band 16-20 everyday):
 
 ![DME selected dataset](plots/DME_selecteddata_fit.png)
 Optimal parameters:  
@@ -327,6 +329,24 @@ In the following plots, the decreasing in AC temperature (and so in pressure) is
 ![DME_temp_decreasing_zoom](plots/DME_t_decreasing_zoom.png)
 
 As we can see, there is not impasse around 1201 mbar, pressure went a bit lower than its last stable value at $T_{Julabo} = 22°C$: $P(\text{last stable before T up)} - P(\text{first stable after T down}) = 0.28$ mbar; even if over sensor resolution, $T_{room}$ when the temperature was set down to 22°C was slightly lower (few decimal of a degree), this could justify the small lag.  
+Considering the above comments, we can affirm that _the gas wasn't absorbed at_ $T_{Julabo}=40°C$, but _the absorption phenomenon does not seem reversible_, in particular seems irreversible for ~100% (decreasing restarted from last stable pt at $T_{Julabo} = 22°C$).  
+
+#### 4. Measurements with $T_{Julabo} = 10°C$
+In the following plots, it is shown the decreasing in temperature after $T_{Julabo}$ set to 10°C.
+
+![DME_t_decreasing_to_10](plots/DME_tj10_decreasing.png)
+
+![DME_t10_fit](plots/DME_t_decrease_fit.png)
+
+#### 3. Re-setting $T_{Julabo} = 22°C$ - temperature rising
+After temperature stabilization, new data at $T_{Julabo} = 22°C$ can be used for confirming the model constructed with data of step 1.  
+Data has been selected with the same criterion as above: we have chosen time intervals where $T_{room}$ was stable, corresponding to the same time band as above: 16-20.  
+As first trial, we have taken new data and merged them with the first dataset; if the optimal parameters are compatible with the ones computed with the first set, we can affirm that the temperature shifts had no effect on the overall process at room temperature. 
+
+
+
+
+
 
 
 
