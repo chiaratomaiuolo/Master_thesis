@@ -147,28 +147,40 @@ if __name__ == "__main__":
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
     
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selected times intervals where T_ambient is stable.
-    '''
+    
     start_times = [['2024-02-12 16:00:00.000', '2024-02-13 16:30:00.000', '2024-02-14 16:00:00.000',\
                    '2024-02-15 16:00:00.000', '2024-02-16 16:00:00.000','2024-02-17 16:00:00.000',\
-                    '2024-02-18 16:00:00.000']]
+                    '2024-02-18 16:00:00.000', '2024-02-21 16:00:00.000', '2024-02-22 16:00:00.000']]
     stop_times = [['2024-02-12 20:00:00.000', '2024-02-13 15:00:00.000', '2024-02-14 15:00:00.000',\
                    '2024-02-15 20:00:00.000','2024-02-16 16:00:00.001', '2024-02-17 20:00:00.000', \
-                   '2024-02-18 20:00:00.000']]
-    '''
+                   '2024-02-18 20:00:00.000', '2024-02-21 20:00:00.000', '2024-02-22 18:00:00.000']]
+    
     
     '''
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, full dataset selection
     start_times = [['2024-02-12 18:00:00.001']]
     stop_times = [['2024-02-20 12:30:00.000']]
     '''
-    
+    '''
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selection of data having T_Julabo = 40 C (RISING)
-    start_times = [['2024-02-19 11:30:00.000']]
+    start_times = [['2024-02-19 11:00:00.000']]
     stop_times = [['2024-02-19 16:20:00.000']]
     '''
+    '''
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selection of data having T_Julabo from 40 to 22 C (DECREASING)
-    start_times = [['2024-02-19 16:20:00.000']]
-    stop_times = [['2024-02-20 12:30:00.000']
+    start_times = [['2024-02-19 16:53:00.000']]
+    stop_times = [['2024-02-19 22:00:00.000']]
+    '''
+
+    '''
+    #Datafile from 20/02/2024 - AC DME filled, selection of data having T_Julabo from 22 to 10 C (DECREASING)
+    start_times = [['2024-02-20 12:37:00.000']]
+    stop_times = [['2024-02-20 18:07:00.000']]
+    '''
+    '''
+    #Datafile from 20/02/2024 - AC DME filled, selection of data having T_Julabo from 10 to 22 C (RISING)
+    start_times = [['2024-02-20 18:07:00.000']]
+    stop_times = [['2024-02-22 18:06:00.000']]
     '''
     
     
@@ -214,7 +226,7 @@ if __name__ == "__main__":
     #Fitting absolute pressure with a single exponential
     t_hours = t_diffs/3600 #hours
     #t = np.array([acq_time*i for i in range(len(timestamps))])
-    popt, pcov = curve_fit(expo, t_hours, P4, p0=[5.75, 20., 1194.], sigma = dP4)
+    popt, pcov = curve_fit(expo, t_hours, P4, p0=[5.75, 24., 1193.], sigma = dP4)
     print(f'Optimal parameters: P0 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\
           tau = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\
           c = {popt[2]} +/- {np.sqrt(pcov[2][2])} [mbar]')
@@ -231,7 +243,7 @@ if __name__ == "__main__":
     plt.xlabel('Time [hours]')
     plt.ylabel(r'$P_4$ [mbar]')
     plt.grid()
-
+    '''
     fig, ax1 = plt.subplots()
     #Cutting on time interval - both times and all the other interesting quantities
     mask = (t_hours>2.5) & (t_hours< 4.2)
@@ -257,6 +269,6 @@ if __name__ == "__main__":
 
     fig.tight_layout()
     fig.legend()
-
+    '''
     
     plt.show()
