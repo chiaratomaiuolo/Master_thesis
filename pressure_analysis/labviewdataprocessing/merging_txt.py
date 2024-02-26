@@ -1,4 +1,8 @@
-
+__description__= \
+"""This script takes as input pathfiles to .txt files and merge them without
+linespaces between rows of diffierent files. 
+It returns a unique file containing the merge of all the others. 
+"""
 def merge_files(input_files, output_file):
     with open(output_file, 'w') as out_file:
         for file_path in input_files:
@@ -6,6 +10,8 @@ def merge_files(input_files, output_file):
                 out_file.write(in_file.read())
 
 if __name__ == "__main__":
+    #Data from 12/2 to 22/2 
+    '''
     input_files = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-12_1226.txt',\
                      '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-13_0000.txt',\
                      '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-14_0000.txt',\
@@ -30,6 +36,9 @@ if __name__ == "__main__":
                      '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-21_0000.txt',\
                      '/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-02-22_0000.txt']
     output_file = "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt"
+    '''
+    input_files = []
+    output_file = ""
 
     merge_files(input_files, output_file)
     print("Merge Completed. Output file is:", output_file)
