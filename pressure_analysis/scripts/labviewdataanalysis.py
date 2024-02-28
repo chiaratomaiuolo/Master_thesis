@@ -8,6 +8,10 @@ from scipy.optimize import curve_fit
 
 from labviewdataprocessing.labviewdatareading import LabViewdata_reading
 
+__description__ = \
+"This script is used for performing the data analysis of some LabView datasets\
+for the study of the behaviour of gases inside Absorption Chamber (AC) of the BFS."
+
 def expo(x, A0, tau, c):
     return A0*(np.exp(-x/tau)) + c
 
@@ -26,23 +30,25 @@ if __name__ == "__main__":
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
     
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selected times intervals where T_ambient is stable.
-    
+    '''
     start_times = [['2024-02-12 16:00:00.000', '2024-02-13 16:30:00.000', '2024-02-14 16:00:00.000',\
                    '2024-02-15 16:00:00.000', '2024-02-16 16:00:00.000','2024-02-17 16:00:00.000',\
                     '2024-02-18 16:00:00.000', '2024-02-21 16:00:00.000', '2024-02-22 16:00:00.000']]
     stop_times = [['2024-02-12 20:00:00.000', '2024-02-13 15:00:00.000', '2024-02-14 15:00:00.000',\
                    '2024-02-15 20:00:00.000','2024-02-16 16:00:00.001', '2024-02-17 20:00:00.000', \
                    '2024-02-18 20:00:00.000', '2024-02-21 20:00:00.000', '2024-02-22 18:00:00.000']]
-    
-    
     '''
+    
+    
+    
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, full dataset selection
-    start_times = [['2024-02-12 18:00:00.001']]
-    stop_times = [['2024-02-20 12:30:00.000']]
-    '''
+    start_times = [['2024-02-16 00:00:00.000', '2024-02-16 18:30:00.000']]
+    stop_times = [['2024-02-16 14:30:00.000','2024-02-19 11:00:00.000']]
+    
+    
     '''
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selection of data having T_Julabo = 40 C (RISING)
-    start_times = [['2024-02-19 11:00:00.000']]
+    start_times = [['2024-02-12 11:00:00.000']]
     stop_times = [['2024-02-19 16:20:00.000']]
     '''
     '''
@@ -61,6 +67,14 @@ if __name__ == "__main__":
     start_times = [['2024-02-20 18:07:00.000']]
     stop_times = [['2024-02-22 18:06:00.000']]
     '''
+    '''
+    #Datafiles from 26/02/2024 - AC DME filled, epoxy samples inside, T_Julabo = 22°C
+    paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
+    start_times = [['2024-02-26 15:51:00.000']]
+    stop_times = [[None]]
+    '''
+    
+
     
     
     
@@ -102,10 +116,11 @@ if __name__ == "__main__":
     axs[2].set(xlabel=r'Timestamp', ylabel=r'$T_{\text{ambient}}$ [°C]')
     axs[2].grid(True)
 
+
     #Fitting absolute pressure with a single exponential
     t_hours = t_diffs/3600 #hours
     #t = np.array([acq_time*i for i in range(len(timestamps))])
-    popt, pcov = curve_fit(expo, t_hours, P4, p0=[5.75, 24., 1193.], sigma = dP4)
+    popt, pcov = curve_fit(expo, t_hours, P4, p0=[3.75, 10., 1140.])
     print(f'Optimal parameters: P0 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\
           tau = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\
           c = {popt[2]} +/- {np.sqrt(pcov[2][2])} [mbar]')
@@ -118,21 +133,29 @@ if __name__ == "__main__":
     plt.title(r'$P_4$ as a function of time from DME filling')
     z = np.linspace(0, max(t_hours), 2000)
     plt.plot(z, expo(z, *popt), color='steelblue')
-    plt.errorbar(t_hours, P4, yerr= dP4, marker='.', linestyle='', color='firebrick')
+    plt.errorbar(t_hours, P4, marker='.', linestyle='', color='firebrick')
     plt.xlabel('Time [hours]')
     plt.ylabel(r'$P_4$ [mbar]')
     plt.grid()
-    '''
+
+    plt.figure('P/T')
+    plt.errorbar(P4/(expo(t_hours, *popt)), T6)
+    plt.xlabel(r'$\frac{P_4}{P_{4_{fitted}}}$')
+    plt.ylabel(r'$T_{ambient}$ [°C]')
+    plt.grid()
+
+    
     fig, ax1 = plt.subplots()
     #Cutting on time interval - both times and all the other interesting quantities
-    mask = (t_hours>2.5) & (t_hours< 4.2)
+    mask = t_hours>0
     P4 = P4[mask]
     T6 = T6[mask]
     T5 = T5[mask]
     t_hours = t_hours[mask]
     #Computing index for performing the time shift of 216 seconds
     log_time = 5000e-3 #s
-    delay_Troom_Tgas = 216 #s #computed 'by hand'
+    #delay_Troom_Tgas = 216 #s #computed 'by hand'
+    delay_Troom_Tgas = 1200 #s #computed 'by hand'
     delay_idx_start = int(np.floor(delay_Troom_Tgas/log_time)) #index for translating P4 forward of 216 s
     delay_idx_stop = len(P4) - (delay_idx_start) #index for cutting the last 216 seconds of measures (for arrays compatibility)
 
@@ -141,13 +164,23 @@ if __name__ == "__main__":
     ax1.plot(t_hours, P4, color='red', label=r'$P_4$ [mbar]')
     ax1.plot(t_hours[:delay_idx_stop], P4[delay_idx_start:], color='green', label=r'$P_4$ [mbar]')
 
+
     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
     ax2.set_ylabel(r'$T_{ambient} - T_5$ [°C]', color='steelblue')
     ax2.plot(t_hours, (T6-T5), linestyle = 'dotted', color='steelblue', label=r'$T_{ambient} - T_5$')
     ax2.tick_params(axis='y', labelcolor='steelblue')
 
+    plt.figure()
+    T_eff = T5+0.16*(T6-T5)/1.16
+    T_eff = T_eff + 273.15 #Kelvin
+    plt.errorbar(P4[delay_idx_start:]/(expo(t_hours[delay_idx_start:], *popt)), T_eff[:delay_idx_stop])
+    plt.xlabel(r'$\frac{P_4}{P_{4_{fitted}}}$')
+    plt.ylabel(r'$T_{ambient}$ [°C]')
+    plt.grid()
+
+
     fig.tight_layout()
     fig.legend()
-    '''
+    
     
     plt.show()
