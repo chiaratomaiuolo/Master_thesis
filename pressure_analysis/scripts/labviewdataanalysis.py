@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np 
 import matplotlib.pyplot as plt 
 
+from scipy.fft import fft, fftfreq, fftshift
 from scipy.optimize import curve_fit
 
 from labviewdataprocessing.labviewdatareading import LabViewdata_reading
@@ -14,6 +15,9 @@ for the study of the behaviour of gases inside Absorption Chamber (AC) of the BF
 
 def expo(x, A0, tau, c):
     return A0*(np.exp(-x/tau)) + c
+
+def double_exp(x, A1, tau1, A2, tau2, c):
+    return A1*(np.exp(-x/tau1)) + A2*(np.exp(-x/tau2)) + c
 
 if __name__ == "__main__":
     #Datafiles are briefly descripted above their pathfile line. 
@@ -40,10 +44,11 @@ if __name__ == "__main__":
     '''
     
     
-    
+    '''
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, full dataset selection
-    start_times = [['2024-02-16 00:00:00.000', '2024-02-16 18:30:00.000']]
-    stop_times = [['2024-02-16 14:30:00.000','2024-02-19 11:00:00.000']]
+    start_times = [['2024-02-16 18:30:00.000']]
+    stop_times = [['2024-02-19 11:00:00.000']]
+    '''
     
     
     '''
@@ -67,14 +72,12 @@ if __name__ == "__main__":
     start_times = [['2024-02-20 18:07:00.000']]
     stop_times = [['2024-02-22 18:06:00.000']]
     '''
-    '''
+    
     #Datafiles from 26/02/2024 - AC DME filled, epoxy samples inside, T_Julabo = 22°C
     paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
     start_times = [['2024-02-26 15:51:00.000']]
     stop_times = [[None]]
-    '''
     
-
     
     
     
@@ -116,9 +119,28 @@ if __name__ == "__main__":
     axs[2].set(xlabel=r'Timestamp', ylabel=r'$T_{\text{ambient}}$ [°C]')
     axs[2].grid(True)
 
+    #Fitting absolute pressure with a double exponential
+    t_hours = t_diffs/3600 #hours
+
+    popt, pcov = curve_fit(double_exp, t_hours, P4, p0=[19.45, 1.4, 58., 25., 1111.])
+    print(f'Optimal parameters: A1 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\
+          tau1 = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\
+          A2 = {popt[2]} +/- {np.sqrt(pcov[0][0])} [mbar],\
+          tau2 = {popt[3]} +/- {np.sqrt(pcov[1][1])} [hours],\
+          c = {popt[4]} +/- {np.sqrt(pcov[2][2])} [mbar]')
+    chisq = (((P4 - double_exp(t_hours, *popt))/(dP4))**2).sum()
+    ndof = len(P4) - len(popt)
+    print(f'chisq/ndof = {chisq}/{ndof}')
+    print(f'Estimation of temperature after 48 hours: {double_exp(48, *popt)}')
+    plt.figure()
+    plt.title(r'$P_4$ inside AC with epoxy samples inside as a function of time from DME filling - data and fits')
+    z = np.linspace(0, max(t_hours), 2000)
+    plt.errorbar(t_hours, P4, marker='.', alpha=0.5, markeredgewidth=0, linestyle='', color='darkorange', label='Data')
+    plt.plot(z, double_exp(z, *popt), color='red', label='Double exponential')
+    plt.xlabel('Time [hours]')
+    plt.ylabel(r'$P_4$ [mbar]')
 
     #Fitting absolute pressure with a single exponential
-    t_hours = t_diffs/3600 #hours
     #t = np.array([acq_time*i for i in range(len(timestamps))])
     popt, pcov = curve_fit(expo, t_hours, P4, p0=[3.75, 10., 1140.])
     print(f'Optimal parameters: P0 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\
@@ -129,14 +151,15 @@ if __name__ == "__main__":
     ndof = len(P4) - len(popt)
     print(f'chisq/ndof = {chisq}/{ndof}')
     print(f'Estimation of the asymptotic value: {expo(t_year,*popt)}')
-    plt.figure()
-    plt.title(r'$P_4$ as a function of time from DME filling')
-    z = np.linspace(0, max(t_hours), 2000)
-    plt.plot(z, expo(z, *popt), color='steelblue')
-    plt.errorbar(t_hours, P4, marker='.', linestyle='', color='firebrick')
-    plt.xlabel('Time [hours]')
+    #plt.figure()
+    #plt.title(r'$P_4$ as a function of time from DME filling')
+    #z = np.linspace(0, max(t_hours), 2000)
+    plt.plot(z, expo(z, *popt), color='forestgreen',label='Single exponential')
+    #plt.errorbar(t_hours, P4, marker='.', linestyle='', color='firebrick')
+    plt.xlabel('Time from filling [hours]')
     plt.ylabel(r'$P_4$ [mbar]')
     plt.grid()
+    plt.legend()
 
     plt.figure('P/T')
     plt.errorbar(P4/(expo(t_hours, *popt)), T6)
@@ -144,7 +167,8 @@ if __name__ == "__main__":
     plt.ylabel(r'$T_{ambient}$ [°C]')
     plt.grid()
 
-    
+    T_eff = T5+0.16*(T6-T5)/1.16
+    T_eff = T_eff + 273.15 #Kelvin
     fig, ax1 = plt.subplots()
     #Cutting on time interval - both times and all the other interesting quantities
     mask = t_hours>0
@@ -156,27 +180,40 @@ if __name__ == "__main__":
     log_time = 5000e-3 #s
     #delay_Troom_Tgas = 216 #s #computed 'by hand'
     delay_Troom_Tgas = 1200 #s #computed 'by hand'
-    delay_idx_start = int(np.floor(delay_Troom_Tgas/log_time)) #index for translating P4 forward of 216 s
+    delay_idx_start = int(np.floor(delay_Troom_Tgas/log_time)) #index for translating P4 forward of n s
     delay_idx_stop = len(P4) - (delay_idx_start) #index for cutting the last 216 seconds of measures (for arrays compatibility)
-
+    
     ax1.set_xlabel('Time from new $T_{Julabo}$ settings [hours]')
     ax1.set_ylabel(fr'$P_4$ [mbar]')
-    ax1.plot(t_hours, P4, color='red', label=r'$P_4$ [mbar]')
-    ax1.plot(t_hours[:delay_idx_stop], P4[delay_idx_start:], color='green', label=r'$P_4$ [mbar]')
+    ax1.plot(t_hours, (P4-expo(t_hours, *popt))/(max(P4)-min(P4)), color='red', label=r'$P_4$ [mbar]')
+    #ax1.plot(t_hours[:delay_idx_stop], P4[delay_idx_start:], color='green', label=r'$P_4$ [mbar]')
 
 
-    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    ax2 = ax1.twinx()  # instantiate a second pair of axes that shares the same x-axis
     ax2.set_ylabel(r'$T_{ambient} - T_5$ [°C]', color='steelblue')
-    ax2.plot(t_hours, (T6-T5), linestyle = 'dotted', color='steelblue', label=r'$T_{ambient} - T_5$')
+    T_eff = T_eff + 273.15 #Kelvin
+    ax2.plot(t_hours, (T_eff[mask])/(max(T_eff)-min(T_eff)), linestyle = 'dotted', color='steelblue', label=r'$T_{ambient} - T_5$')
+    #ax2.plot(t_hours, (T6-T5)/(max(T6-T5)-min(T6-T5)), linestyle = 'dotted', color='steelblue', label=r'$T_{ambient} - T_5$')
     ax2.tick_params(axis='y', labelcolor='steelblue')
 
     plt.figure()
-    T_eff = T5+0.16*(T6-T5)/1.16
-    T_eff = T_eff + 273.15 #Kelvin
     plt.errorbar(P4[delay_idx_start:]/(expo(t_hours[delay_idx_start:], *popt)), T_eff[:delay_idx_stop])
     plt.xlabel(r'$\frac{P_4}{P_{4_{fitted}}}$')
-    plt.ylabel(r'$T_{ambient}$ [°C]')
+    plt.ylabel(r'$T_{gas}$ [°C]')
     plt.grid()
+    '''
+    plt.figure()
+    print(fftfreq(len(T_eff), (log_time/3600)))
+    print(fft(T_eff))
+    freq = fftfreq(len(T_eff), (log_time/3600))
+    print((log_time)*len(T_eff))
+    print(len(fft((T_eff)/(max(T_eff)-min(T_eff)))))
+    print(len(fftfreq(len(T_eff), (log_time/3600))))
+    sp = fft((T_eff)/(max(T_eff)-min(T_eff)))
+    plt.plot(freq, sp.real)
+    plt.xlim(-0.2,0.2)
+    #plt.ylim(0,1000)
+    '''
 
 
     fig.tight_layout()
