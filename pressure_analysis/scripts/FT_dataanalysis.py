@@ -108,14 +108,16 @@ if __name__ == "__main__":
     plt.plot(xf, 2.0/N * np.abs(Tft[0:N//2]), label=r'$T_{eff} - \mu_{T_{eff}}$ DFT') #The factor 2.0/N is for normalization,(remember the Nyquist frequency expression)
     plt.plot(xf, 2.0/N * np.abs(Pft[0:N//2]), label=r'$P_{4} - \mu_{P_{4}}$ DFT')
     plt.plot(xf, 2.0/N * np.abs(T_butter_ft[0:N//2]), label=r'$T_{eff,filtered} - \mu_{T_{eff,filtered}}$ DFT')
-    #plt.axvline(1.16e-05, color='r', linestyle='dashed', label='1/24h line')
-    #plt.axvline(2.31e-05, color='pink', linestyle='dashed', label='1/12h line')
-    #plt.axvline(1/3600, color='brown', label='1/1h line')
     plt.xlim(0, 0.0003)
     plt.xlabel('Frequency [Hz]')
     plt.ylabel('DFT coefficient')
     plt.legend()
     plt.grid()
+
+    #Some vlines for reference
+    #plt.axvline(1.16e-05, color='r', linestyle='dashed', label='1/24h line')
+    #plt.axvline(2.31e-05, color='pink', linestyle='dashed', label='1/12h line')
+    #plt.axvline(1/3600, color='brown', label='1/1h line')
 
     #Plotting hysteresis curves: P as a function of the effective temperature
     #Fitting data with a single exponential in order to compare pts with expected values
@@ -135,6 +137,7 @@ if __name__ == "__main__":
     ax2.tick_params(axis='y', labelcolor='steelblue')
     fig.legend()
 
+    #Plotting hysteresis curves in ordert to understand if time lag has been compensated
     plt.figure('P-T curves')
     #Plotting pressures in Pa and temperatures in Kelvin
     plt.errorbar((P4-expo(t_hours,*popt))*100, T_butterworth+273.15, label=r'$T_{eff,filtered}$')
@@ -156,7 +159,6 @@ if __name__ == "__main__":
           c = {popt[2]} +/- {np.sqrt(pcov[2][2])} [mbar]')
     plt.figure('P4/T_eff as a function of time')
     plt.errorbar(t, p_over_tfiltered, label=r'$\frac{P_4}{T_{eff,filtered}}$')
-    #z = np.linspace(min(t),max(t),5000)
     plt.plot(t, expo(t,*popt), label='Exponential fit')
     plt.ylabel(r'$\frac{P_4}{T_{eff,filtered}}$ [$\frac{Pa}{K}$]')
     plt.xlabel(r'time [hours]')
