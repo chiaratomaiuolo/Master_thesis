@@ -31,3 +31,8 @@ def triple_expo(x, P0, Delta1, tau1, Delta2, tau2, Delta3, tau3):
     """Decreasing triple exponential
     """
     return P0 - (Delta1*(1-np.exp(-x/tau1)) + Delta2*(1-np.exp(-x/tau2)) + Delta3*(1-np.exp(-x/tau3)))
+
+def triple_expo_P0_frozen(x, Delta1, tau1, Delta2, tau2, Delta3, tau3):
+    """Decreasing triple exponential
+    """
+    return triple_expo(x, 1198.8, Delta1, tau1, Delta2, tau2, Delta3, tau3)
