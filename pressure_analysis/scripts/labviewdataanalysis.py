@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from scipy.fft import fft, fftfreq, fftshift
 from scipy.optimize import curve_fit
 
-from labviewdataprocessing.labviewdatareading import LabViewdata_reading
+from pressure_analysis.labviewdatareading import LabViewdata_reading
 
 __description__ = \
 "This script is used for performing the data analysis of some LabView datasets\

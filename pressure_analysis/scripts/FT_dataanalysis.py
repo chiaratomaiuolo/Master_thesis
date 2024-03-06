@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 
 from scipy.fft import fft, fftfreq
 from scipy.optimize import curve_fit
-from scipy.signal import butter, sosfilt, sosfiltfilt
+from scipy.signal import butter, sosfilt
 
-from labviewdataprocessing.labviewdatareading import LabViewdata_reading
+from pressure_analysis.labviewdatareading import LabViewdata_reading
 
 __description__ = \
 "This script is used for performing the data analysis of some LabView datasets\
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     #gas temperature (weighted mean of T5 and room temperature
     #where the weight of the room temperature has been computed
     #in a time interval where T5 could be considered as constant.
-    T_eff = T5+0.16*(T6-T5)/1.16 #°C 
+    T_eff = T5+0.16*(T6-T5)/1.16 #°C
     #T_eff = T_eff + 273.15 #Kelvin
 
     #Looking at overall data - P4, T5, T_room
