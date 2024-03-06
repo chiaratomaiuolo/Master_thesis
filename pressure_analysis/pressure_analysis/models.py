@@ -21,7 +21,7 @@ def double_expo(x, P0, Delta1, tau1, Delta2, tau2):
     return P0 - (Delta1*(np.exp(-x/tau1)) - Delta2*(np.exp(-x/tau2)))
 
 
-def triple_exp_P0_fixed(x, P0, Delta1, tau1, Delta2, tau2, Delta3, tau3):
+def triple_expo(x, P0, Delta1, tau1, Delta2, tau2, Delta3, tau3):
     """Decreasing triple exponential
     """
     return P0 - (Delta1*(np.exp(-x/tau1)) - Delta2*(np.exp(-x/tau2)) - Delta3*(np.exp(-x/tau3)))
