@@ -5,18 +5,14 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 from scipy.optimize import curve_fit
-from scipy.signal import butter, sosfilt
 
 from pressure_analysis.filtering import temperature_butterworth_filtering
 from pressure_analysis.labviewdatareading import LabViewdata_reading, plot_with_residuals
-from pressure_analysis.models import expo, double_expo, triple_expo
+from pressure_analysis.models import expo, double_expo, triple_expo, double_exp_P0_frozen
 
 __description__ = \
 "This script is used for performing the data analysis of some LabView datasets\
 for the study of the behaviour of gases inside Absorption Chamber (AC) of the BFS."
-
-def double_exp_P0_frozen(x, Delta1, tau1, Delta2, tau2):
-    return double_expo(x, 1198.8, Delta1, tau1, Delta2, tau2)
 
 if __name__ == "__main__":
     #Datafiles are briefly descripted above their pathfile line. 
@@ -54,10 +50,9 @@ if __name__ == "__main__":
     T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
 
     #Fitting P4/T_eff_filtered with a triple exponential
-    P_corrected = (((P4*100)/(T_eff_filtered+273.15))*(22+273.15))/100 #mbar
+    P_corrected = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
     popt, pcov = curve_fit(double_exp_P0_frozen, t_hours, P_corrected, p0=[50., 10., 100., 100.])
-    print(f' Fixed parameters: A0 = 1.00 [Pa/K], tau0 = 113.4 [hours], c0 = 0 [Pa/K]\n\
-          Optimal parameters of remaining double exp:\n\
+    print(f'Optimal parameters of double exp:\n\
           Delta1 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\n\
           tau1 = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\n\
           Delta2 = {popt[2]} +/- {np.sqrt(pcov[0][0])} [mbar],\n\
