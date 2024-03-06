@@ -7,50 +7,16 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.signal import butter, sosfilt
 
-from pressure_analysis.labviewdatareading import LabViewdata_reading
+from pressure_analysis.filtering import temperature_butterworth_filtering
+from pressure_analysis.labviewdatareading import LabViewdata_reading, plot_with_residuals
+from pressure_analysis.models import expo, double_expo, triple_expo
 
 __description__ = \
 "This script is used for performing the data analysis of some LabView datasets\
 for the study of the behaviour of gases inside Absorption Chamber (AC) of the BFS."
 
-def expo(x, A0, tau, c):
-    return A0*(np.exp(-x/tau)) + c
-
-def double_exp(x, DeltaP1, tau1, DeltaP2, tau2):
-    return 1201. - DeltaP1*(1-np.exp(-x/tau1)) - DeltaP2*(1-np.exp(-x/tau2))
-
-def triple_exp(x, A1, tau1, A2, tau2, c):
-    return expo(x, 1.00, 113.4, 0.) + double_exp(x, A1, tau1, A2, tau2, c)
-
-def temperature_filtering(T: np.array, sampling_time: float):
-    """The following function applies a double Butterworth filter to data.
-    It is used for compensating for the time lag of the measurement 
-    and the heat capacity of the AC.
-    Filter parameters are fixed.
-
-    Arguments
-    ---------
-    - T : np.array
-        Array containing temperature measurements.
-    - sampling_time : float
-        sampling time in seconds. 
-    
-    Return
-    ------
-    - T_filtered : np.array
-        Array containing the filtered T.
-
-    """
-    #Constructing a lowpass Butterworth filter with defined cutoff frequency
-    f_cutoff = 1/(1.5*3600) #Hz
-    sos = butter(4, f_cutoff, 'low', fs=1/sampling_time, analog=False, output='sos') #creating a lowpass filter
-    all_sos = [sos]
-    sos2 = butter(2, [0.0002,0.0003], 'bandstop', fs=1/sampling_time, analog=False, output='sos') #creating a bandstop filter
-    all_sos.append(sos2)
-    sos = np.vstack(all_sos)
-    T_butterworth = sosfilt(sos, T-T[0]) #It is needed to shift data in order to let them start from 0
-    T_butterworth += T[0] #Re-shifting the overall array
-    return T_butterworth
+def double_exp_P0_frozen(x, Delta1, tau1, Delta2, tau2):
+    return double_expo(x, 1198.8, Delta1, tau1, Delta2, tau2)
 
 if __name__ == "__main__":
     #Datafiles are briefly descripted above their pathfile line. 
@@ -63,16 +29,10 @@ if __name__ == "__main__":
     log_time = 5000e-3 #s (from logbook)
     T_Julabo = 22 #°C
 
-    #Obtaining interesting data
-    data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
-    timestamps = data_list[0]
-    T5 = data_list[6]
-    T6 = data_list[7]
-    P4 = data_list[15]
-    dP4 = data_list[17]
-    P3 = data_list[13]
-    TJ = data_list[9]
-    t_diffs = data_list[18] #s
+    #Obtaining data
+    timestamps, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange,\
+    P4, P5, t_diffs = LabViewdata_reading(paths_to_data, start_times, stop_times)
+
     #Computing time in hours and effective temperature
     t_hours = t_diffs/3600 #hours
     T_eff = T5+0.16*(T6-T5)/1.16 #°C 
@@ -91,28 +51,22 @@ if __name__ == "__main__":
     axs[2].grid(True)
 
     #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
-    T_eff_filtered = temperature_filtering(T_eff, log_time)
+    T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
 
     #Fitting P4/T_eff_filtered with a triple exponential
     P_corrected = (((P4*100)/(T_eff_filtered+273.15))*(22+273.15))/100 #mbar
-    popt, pcov = curve_fit(double_exp, t_hours, P_corrected, p0=[50., 10., 100., 100.])
+    popt, pcov = curve_fit(double_exp_P0_frozen, t_hours, P_corrected, p0=[50., 10., 100., 100.])
     print(f' Fixed parameters: A0 = 1.00 [Pa/K], tau0 = 113.4 [hours], c0 = 0 [Pa/K]\n\
           Optimal parameters of remaining double exp:\n\
-          A1 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [Pa/K],\n\
+          Delta1 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\n\
           tau1 = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\n\
-          A2 = {popt[2]} +/- {np.sqrt(pcov[0][0])} [Pa/K],\n\
+          Delta2 = {popt[2]} +/- {np.sqrt(pcov[0][0])} [mbar],\n\
           tau2 = {popt[3]} +/- {np.sqrt(pcov[1][1])} [hours],')
-    #chisq = (((P4 - triple_exp(t_hours, *popt)))**2).sum()
-    #ndof = len(P4) - len(popt)
-    #print(f'chisq/ndof = {chisq}/{ndof}')
 
-    fig, axs = plt.subplots(2)
-    axs[0].plot(t_hours, double_exp(t_hours, *popt), label='Double exponential')
+    fig, axs = plot_with_residuals(t_hours, P_corrected, double_exp_P0_frozen(t_hours, *popt))
     axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ [mbar]')
     axs[0].grid(True)
-    res = (P_corrected - double_exp(t_hours, *popt))/P_corrected
-    axs[1].plot(t_hours, res, label='Residuals')
-    axs[1].set(xlabel=r'Time [hours]', ylabel=r'Residuals')
+    axs[1].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ normalized residuals')
     axs[1].grid(True)
 
 

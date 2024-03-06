@@ -4,7 +4,6 @@ from datetime import datetime
 import numpy as np 
 import matplotlib.pyplot as plt 
 
-from scipy.fft import fft, fftfreq, fftshift
 from scipy.optimize import curve_fit
 from scipy.signal import butter, sosfilt
 
