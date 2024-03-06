@@ -8,13 +8,13 @@ from scipy.optimize import curve_fit
 
 from pressure_analysis.filtering import temperature_butterworth_filtering
 from pressure_analysis.labviewdatareading import LabViewdata_reading, plot_with_residuals
-from pressure_analysis.models import expo, expo_P0_frozen, double_expo, triple_expo, double_exp_P0_frozen
+from pressure_analysis.models import expo, expo_P0_frozen, double_expo, double_exp_P0_frozen, triple_expo, triple_expo_P0_frozen
 
 __description__ = \
 "This script is used for performing the data analysis of some LabView datasets\
 for the study of the behaviour of gases inside Absorption Chamber (AC) of the BFS."
 
-def iterative_double_exponential_fit(x: np.array, y: np.array, mask: np.array, popt: np.array, hours_start:float=3, hours_lag: float=10):
+def iterative_exponential_fit(x: np.array, y: np.array, model, mask: np.array, popt: np.array, hours_start:float=3, hours_lag: float=10):
     """Performs an iterative fit on an increasing-lenght dataset until its end.
     At the end of the fit prints the parameters and plots the current fitting 
     curve on the latest figure of the script.
@@ -34,18 +34,31 @@ def iterative_double_exponential_fit(x: np.array, y: np.array, mask: np.array, p
         is added to the fitted data at every iteration.
     """
     i = hours_start #states the start of the dataset in terms of hours from first data object
+    popts = []
+    mask = x < i
+    popt_, pcov_ = curve_fit(model, t_hours[mask], P_eq[mask], p0=popt)
+
+    print(f'Optimal parameters of {model.__name__} for the first 3 hours of data:')
+    popts.append(popt_)
+    print(popt_)
+    #Plotting pts, fit and residuals for fit of the first 3 hours
+    fig, axs = plot_with_residuals(t_hours[mask], P_eq[mask], triple_expo_P0_frozen(t_hours[mask], *popt_))
+    axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ [mbar]')
+    axs[0].grid(True)
+    axs[1].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ normalized residuals')
+    axs[1].grid(True)
+    
+    fig, axs = plt.subplots(2)
     while mask[-1] == False:
         mask = x < i
-        popt, pcov = curve_fit(double_exp_P0_frozen, x[mask], y[mask], p0=[*popt])
-        print('Fit with double exponential - 4 free parameters')
-        print(f'Optimal parameters of double exp:\n\
-                Delta1 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\n\
-                tau1 = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\n\
-                Delta2 = {popt[2]} +/- {np.sqrt(pcov[0][0])} [mbar],\n\
-                tau2 = {popt[3]} +/- {np.sqrt(pcov[1][1])} [hours],')
-        plt.plot(x, double_exp_P0_frozen(x, *popt), label=f'Double exponential with $t < {i} [hours]$')
+        popt_, pcov_ = curve_fit(model, x[mask], y[mask], p0= popts[-1])
+        popts.append(popt_)
+        print(f'Optimal parameters of {model.__name__}:\n')
+        print(popt_)
+        axs[0].plot(x, model(x, *popt_), label=f'{model.__name__} with $t < {i} [hours]$')
+        #axs[1].errorbar(i, popt[-1], marker='.', linestyle='')
         i += hours_lag
-    return
+    return popt_, fig, axs
 
 if __name__ == "__main__":
     #Datafiles are briefly descripted above their pathfile line. 
@@ -109,6 +122,7 @@ if __name__ == "__main__":
           tau1 = {popt_init[1]} +/- {np.sqrt(pcov_init[1][1])} [hours],\n\
           Delta2 = {popt_init[2]} +/- {np.sqrt(pcov_init[0][0])} [mbar],\n\
           tau2 = {popt_init[3]} +/- {np.sqrt(pcov_init[1][1])} [hours],')
+    
     #Plotting pts, fit and residuals
     fig, axs = plot_with_residuals(t_hours[mask], P_eq[mask], double_exp_P0_frozen(t_hours[mask], *popt_init))
     axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ [mbar]')
@@ -116,14 +130,41 @@ if __name__ == "__main__":
     axs[1].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ normalized residuals')
     axs[1].grid(True)
 
-    #Plotting pts and fit
-    plt.figure()
-    iterative_double_exponential_fit(t_hours, P_eq, mask, popt_init, hours_start=i, hours_lag=15)
-    plt.title(rf'$P_4$ inside AC with epoxy samples, DME filled - all parameters free')
-    plt.errorbar(t_hours, P4, marker='.', alpha=0.5, markeredgewidth=0, linestyle='', color='darkorange', label='Data')
-    plt.xlabel('Time [hours]')
-    plt.ylabel(r'$P_4$ [mbar]')
-    plt.grid()
-    plt.legend()
+    #Fixing parameters for the first exponential
+    def double_exp_frozen(x, Delta2, tau2):
+        return double_exp_P0_frozen(x, popt_init[0], popt_init[1], Delta2, tau2)
+    
+    #Plotting pts and fit with double exp - 4 free parameters
+    fig, axs = iterative_exponential_fit(t_hours, P_eq, double_exp_P0_frozen, mask, popt_init, hours_start=i, hours_lag=15)
+    fig.suptitle(rf'$P_4$ inside AC with epoxy samples, DME filled - all parameters free')
+    axs[0].errorbar(t_hours, P4, marker='.', alpha=0.5, markeredgewidth=0, linestyle='', color='darkorange', label='Data')
+    axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$')
+    axs[1].set(xlabel=r'Time [hours]', ylabel=r'$\tau_2$ [hours]')
+    axs[0].grid(True)
+    axs[1].grid(True)
+    axs[0].legend()
+
+    #Plotting pts and fit with double exp - 6 free parameters
+    popt_init, pcov_init = curve_fit(triple_expo_P0_frozen, t_hours[mask], P_eq[mask], p0=[10., 1., 36.31935209, 7.28600937, 169.75012577, 155.1271365])
+    fig, axs = iterative_exponential_fit(t_hours, P_eq, triple_expo_P0_frozen, mask, popt_init, hours_start=i, hours_lag=15)
+    fig.suptitle(rf'$P_4$ inside AC with epoxy samples, DME filled - all parameters free')
+    axs[0].errorbar(t_hours, P4, marker='.', alpha=0.5, markeredgewidth=0, linestyle='', color='darkorange', label='Data')
+    axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$')
+    axs[1].set(xlabel=r'Time [hours]', ylabel=r'$\tau_2$ [hours]')
+    axs[0].grid(True)
+    axs[1].grid(True)
+    axs[0].legend()
+
+
+    #Plotting pts and fit with first exp fixed
+    fig, axs = iterative_exponential_fit(t_hours, P_eq, double_exp_frozen, mask, popt_init[2:4], hours_start=i, hours_lag=15)
+    fig.suptitle(rf'$P_4$ inside AC with epoxy samples, DME filled - first exponential frozen')
+    axs[0].errorbar(t_hours, P4, marker='.', alpha=0.5, markeredgewidth=0, linestyle='', color='darkorange', label='Data')
+    axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$')
+    axs[1].set(xlabel=r'Time [hours]', ylabel=r'$\tau_2$ [hours]')
+    axs[0].grid(True)
+    axs[1].grid(True)
+    axs[0].legend()
+
 
     plt.show()
