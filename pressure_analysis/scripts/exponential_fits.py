@@ -44,6 +44,7 @@ def iterative_exponential_fit(x: np.array, y: np.array, model, popt: np.array, h
     print(popt_)
     #Plotting pts, fit and residuals for fit of the first 3 hours
     fig, axs = plot_with_residuals(t_hours[mask], P_eq[mask], model(t_hours[mask], *popt_))
+    fig.suptitle(f'Fit of the first {hours_start} hours of data with a {model.__name__}')
     axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ [mbar]')
     axs[0].grid(True)
     axs[1].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ normalized residuals')
@@ -57,10 +58,16 @@ def iterative_exponential_fit(x: np.array, y: np.array, model, popt: np.array, h
         hours.append(i)
         popt_, pcov_ = curve_fit(model, x[mask], y[mask], p0= popts[-1])
         popts.append(popt_)
-        print(f'Optimal parameters of {model.__name__}:\n')
-        print(popt_)
-        plt.plot(x, model(x, *popt_), label=f'{model.__name__} with $t < {i} [hours]$')
+        #print(f'Optimal parameters of {model.__name__}:\n')
+        #for j in range(len(popt_)):
+        #    print(f'{popt_[j]} +/- {np.sqrt(pcov_[j][j])}\n')
+        #plt.plot(x, model(x, *popt_), label=f'{model.__name__} with $t < {i} [hours]$')
         i += hours_lag
+    plt.plot(x, model(x, *popt_), label=f'{model.__name__} with $t < {i} [hours]$')
+    print(f'Final optimal parameters for {model.__name__}:')
+    print(popt_)
+    fig, axs = plot_with_residuals(t_hours, P_eq, model(t_hours, *popt_))
+    fig.suptitle(f'Fit with all dataset using a {model.__name__}')
     plt.grid()
     plt.legend()
     return hours, popts
@@ -112,5 +119,7 @@ if __name__ == "__main__":
     hours, popts = iterative_exponential_fit(t_hours, P_eq, frozen_triple_exp,\
                     popt=[33.86507696, 18.45662877, 186.66209992, 216.86914815],\
                     hours_start=3, hours_lag=10)
+    
+    #plot_with_residuals(t_hours, P_eq, frozen_triple_exp(t_hours, *popts[-1]))
 
     plt.show()
