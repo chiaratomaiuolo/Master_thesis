@@ -8,6 +8,7 @@ from scipy.optimize import curve_fit
 from scipy.signal import butter, sosfilt
 
 from pressure_analysis.labviewdatareading import LabViewdata_reading
+from pressure_analysis.models import alpha_expo_scale
 
 __description__ = \
 "This script is used for performing the data analysis of some LabView datasets\
@@ -28,11 +29,17 @@ def double_exp(x, A1, tau1, A2, tau2, c):
 if __name__ == "__main__":
     #Datafiles are briefly descripted above their pathfile line. 
     #Select the interested one and comment the other paths_to_data, start_times, stop_times
-
+    '''
     #Datafile containing measurements with DME, no epoxy samples inside - FOR BACKGROUND EFFECTS STUDIES
     paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt"]
     start_times = [['2024-02-16 18:30:00.000']]
     stop_times = [['2024-02-19 11:00:00.000']]
+    log_time = 5000e-3 #s (from logbook)
+    '''
+    paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
+    start_times = [['2024-02-26 15:50:35.000']]
+    stop_times = [[None]]
+    T_Julabo = 22 #°C
     log_time = 5000e-3 #s (from logbook)
 
     '''
@@ -52,7 +59,7 @@ if __name__ == "__main__":
     T6 = data_list[7] #Room temperature
     P4 = data_list[15] #Pressure inside chamber
     TJ = data_list[9] #Temperature set for Julabo termoregulator
-    t_diffs = data_list[18] #s from starting point (set as t=0 s)
+    t_diffs = data_list[17] #s from starting point (set as t=0 s)
 
     #Computing interesting derivate quantities
     t_hours = t_diffs/3600 #hours
@@ -125,13 +132,15 @@ if __name__ == "__main__":
 
     #Plotting hysteresis curves: P as a function of the effective temperature
     #Fitting data with a single exponential in order to compare pts with expected values
-    popt, pcov = curve_fit(expo, t_hours, P4, p0=[3.75, 10., 1140.])
+    
+    #popt, pcov = curve_fit(expo, t_hours, P4, p0=[3.75, 10., 1140.])
+    popt, pcov = curve_fit(alpha_expo_scale, t_hours, P4, p0=[1201., 3.75, 10., 1140.])
     
     #Plotting pressure and Butterworth filtered effective temperature in time domain
     fig, ax1 = plt.subplots()
     ax1.set_xlabel('Time from new $T_{Julabo}$ settings [hours]')
     ax1.set_ylabel(r'$P_4 - P_{4,fitted}$ [mbar]', color='red')
-    ax1.plot(t_hours, (P4-expo(t_hours,*popt))/(np.max(P4)-np.min(P4)),\
+    ax1.plot(t_hours, (P4-alpha_expo_scale(t_hours,*popt))/(np.max(P4)-np.min(P4)),\
             color='red', label=r'$P_4 - P_{4,fitted}$ [mbar]')
     ax1.tick_params(axis='y', labelcolor='red')
     ax2 = ax1.twinx()  # instantiate a second pair of axes that shares the same x-axis
@@ -145,8 +154,8 @@ if __name__ == "__main__":
     #Plotting hysteresis curves in ordert to understand if time lag has been compensated
     plt.figure('P-T curves')
     #Plotting pressures in Pa and temperatures in Kelvin
-    plt.errorbar((P4-expo(t_hours,*popt))*100, (T_eff-T_eff[0])+273.15, label=r'$T_{eff}$')
-    plt.errorbar((P4-expo(t_hours,*popt))*100, T_butterworth+273.15, label=r'$T_{eff,filtered}$')
+    plt.errorbar((P4-alpha_expo_scale(t_hours, *popt))*100, (T_eff-T_eff[0])+273.15, label=r'$T_{eff}$')
+    plt.errorbar((P4-alpha_expo_scale(t_hours, *popt))*100, T_butterworth+273.15, label=r'$T_{eff,filtered}$')
     plt.xlabel(r'$P_4 - P_{4,fitted}$ [Pa]')
     plt.ylabel(r'$T_{eff,filtered}$ [K]')
     plt.legend()
@@ -158,7 +167,7 @@ if __name__ == "__main__":
     P4_Pa = P4*100
     p_over_tfiltered = P4_Pa/T_butterworth_K
     t=t_hours
-    popt, pcov = curve_fit(expo, t, p_over_tfiltered, p0=[*popt])
+    popt, pcov = curve_fit(alpha_expo_scale, t, p_over_tfiltered, p0=[*popt])
     print(f'Optimal parameters: \n\
           A0 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [Pa/K],\n\
           tau = {popt[1]} +/- {np.sqrt(pcov[1][1])} [hours],\n\
@@ -166,7 +175,7 @@ if __name__ == "__main__":
     plt.figure('P4/T_eff as a function of time')
     plt.errorbar(t, P4_Pa/(T_eff-T_eff[0]+273.15), alpha=0.5, label=r'$\frac{P_4}{T_{eff}}$')
     plt.errorbar(t, p_over_tfiltered, label=r'$\frac{P_4}{T_{eff,filtered}}$')
-    plt.plot(t, expo(t,*popt), label='Exponential fit')
+    plt.plot(t, alpha_expo_scale(t,*popt), label='Exponential fit')
     plt.ylabel(r'$\frac{P_4}{T_{eff,filtered}}$ [$\frac{Pa}{K}$]')
     plt.xlabel(r'time [hours]')
     plt.legend()

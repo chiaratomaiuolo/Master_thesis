@@ -148,4 +148,5 @@ def plot_with_residuals(x: np.array, y_data: np.array, y_fitted: np.array):
     axs[0].legend()
     res_normalized = (y_data - y_fitted)/y_data
     axs[1].plot(x, res_normalized)
+    axs[1].plot()
     return fig, axs
