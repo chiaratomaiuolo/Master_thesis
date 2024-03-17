@@ -47,8 +47,16 @@ if __name__ == "__main__":
                    "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-02_0000.txt",\
                    "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-03_0000.txt",\
                    "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-04_0000.txt",\
-                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-05_0000.txt"]
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-05_0000.txt",\
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-06_0000.txt",\
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-07_0000.txt",\
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-08_0000.txt",\
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-09_0000.txt",\
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-10_0000.txt",\
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-11_0000.txt",\
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-12_0000.txt",\
+                   "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/bfslog_2024-03-13_0000.txt"]
     output_file = "/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"
 
     merge_files(input_files, output_file)
-    print("Merge Completed. Output file is:", output_file)
+    print("Merge Completed.\n Output file is:", output_file)
