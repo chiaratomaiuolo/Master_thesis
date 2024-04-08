@@ -46,7 +46,7 @@ It is desirable to divide the Ka1+Ka2 from the Kb1+Kb3+Kb5. $\Delta E \simeq 880
 
 Note that resolving the lines is not only an hardware tuning, the **reconstruction can be tuned for obtaining peak division**. 
 
-## Event physics 
+## Event physics
 As previously described, this detector works using photoelectric effect of $\gamma$ on the silicon detector.  
 The physics with zero noise is easy to compute:  
 Being $E_{K\beta} = 8900$ eV, it is easy to compute the mean number of electron-holes pair created by the photoconversion: $<e> = \frac{E_{K\beta}}{E_{ion}} \pm \sqrt{\frac{E_{K\beta}}{E_{ion}} \cdot F}= 2472 \pm 17$ [$e-$]  
@@ -195,13 +195,11 @@ Those three does not seem the right choice for our scopes, for different reasons
 - Fixing a threshold could guarantee some standards but it is not possible to find the _best_, because there is no metric to minimize or maximize;
 - The Gini index minimization is not what we are searching for, it looks for the minimum impurity inside each group but when the two groups are too close, it results in merging the $\beta$ elements into $\alpha$ peak, because there is no the concept of misclassification inside it, only the idea of impurity inside groups, no matter of which type. 
 
-So, by now, maybe the first methods are better because guarantee a certain efficiency or contamination. Maybe I could span all MCs fixing the efficiency and looking for minimum contamination.  
-
-What we could seach for is a metric that has the concept of misclassification inside, such as _accuracy_ or _precision_. 
+Anyway, the scope is to distinguish between the two peaks, so, setting a threshold contamination is the right choice. In particular, we want to guarantee a precision (true positive rate) _on alpha peak_, so we fix the contamination of betas on alpha to a low value, such as 2%.
 
 
 
 
 
 
-contributo di fano + contributo elettronico  
+- plot contributo di fano + contributo elettronico [] 
