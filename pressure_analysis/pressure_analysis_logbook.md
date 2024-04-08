@@ -343,6 +343,51 @@ After temperature stabilization, new data at $T_{Julabo} = 22°C$ can be used fo
 Data has been selected with the same criterion as above: we have chosen time intervals where $T_{room}$ was stable, corresponding to the same time band as above: 16-20.  
 As first trial, we have taken new data and merged them with the first dataset; if the optimal parameters are compatible with the ones computed with the first set, we can affirm that the temperature shifts had no effect on the overall process at room temperature. 
 
+## AC DME filled with epoxy samples inside (from 26/2/2024 -)
+
+In order to correct as much as possible for temperature variations, we have considered the following quantity:
+
+$$P_{eq}[mbar] = \frac{P_4[\text{Pa}]}{T_{room,filtered}[\text{K}]} \cdot T_{Julabo}[\text{K}] \cdot 100[\frac{\text{mbar}}{\text{Pa}}]$$
+
+After several days of data, trying to fit with a single, double and triple exponential, issues with the models were evident: the $\tau$ s kept rising everyday we were adding data and the first part and the final part of data were not fitting well:
+
+![DME_with_samples_double_fit](plots/fit_double.png)
+
+![DME_with_samples_double_fit_params](plots/double_exp_fit.png)
+
+As we can see, there is no plateau for an parameter and, normalized residuals show that the first part (bc of externally constrained $P_0$) and the last part show a bad trend.  
+After having tried with a triple exponential, giving the same problems, we have concluded that a sum of exponentials wasn't a good choice for our data.
+
+After some days, we attempted the following model:
+$$P_{eq}(t) = P_0 - \Delta \cdot (1 - e^{(- \frac{t}{\tau})^\alpha})$$
+
+This gave a good result with fewer parameters, without the need of fixing $P_0$:
+
+![DME_with_samples_double_fit](plots/a_exp_params.png)
+
+![DME_with_samples_double_fit_params](plots/alpha_exp_fit.png)
+
+We can see that parameters seems more stable and that, in particular, $\alpha$ is near to 0.5 (!)  
+
+Residuals are minor and have more stable trend, noticing that the day-night effect tends to grow as pressure decreases (ask Leo for gas-vapour curves, could explain this trend?)
+
+Issue: fit does not converge if we take a time band < 38 hours. 
+
+
+
+### Data analysis v.2 
+
+8/3/2024) 
+To do list
+
+- plot of taus and deltas as a function of time lenght of the dataset 
+    - for double exp []
+    - for triple exp []
+
+- look at some literature for exponential plots []
+- look at covariance matrix of params! []
+
+
 
 
 
