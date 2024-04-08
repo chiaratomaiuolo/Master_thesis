@@ -2,6 +2,13 @@
 ######################
 ../.DS_Store
 .DS_Store
+../.DS_Store
+../hexsample/.DS_Store
+../hexsample/figures/.DS_Store
+
+# pycache #
+###########
+pressure_analysis/__pycache__/
 # PDFs #
 ######################
 Y_Takeuchi_2014_J._Inst._9_C01002.pdf
