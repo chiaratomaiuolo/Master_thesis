@@ -29,4 +29,5 @@ def triple_expo(x, P0, Delta1, tau1, Delta2, tau2, Delta3, tau3):
     """Decreasing triple exponential
     """
     return P0 - (Delta1*(1-np.exp(-x/tau1)) + Delta2*(1-np.exp(-x/tau2)) + Delta3*(1-np.exp(-x/tau3)))
-
+def LS(x, P0, r, D):
+    return P0*(np.sqrt(np.pi))*(1/(np.sqrt(np.pi) + r*np.sqrt(x*D)))
