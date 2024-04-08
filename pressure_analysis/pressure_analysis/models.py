@@ -1,13 +1,7 @@
-import argparse
-from datetime import datetime
+import numpy as np
 
-import numpy as np 
-import matplotlib.pyplot as plt 
-
-from scipy.optimize import curve_fit
-from scipy.signal import butter, sosfilt
-
-
+"""Defining interesting models for secular pressure trends of DME inside GPDs
+"""
 def expo(x, P0, Delta, tau):
     """Decreasing single exponential
     """
@@ -35,3 +29,4 @@ def triple_expo(x, P0, Delta1, tau1, Delta2, tau2, Delta3, tau3):
     """Decreasing triple exponential
     """
     return P0 - (Delta1*(1-np.exp(-x/tau1)) + Delta2*(1-np.exp(-x/tau2)) + Delta3*(1-np.exp(-x/tau3)))
+
