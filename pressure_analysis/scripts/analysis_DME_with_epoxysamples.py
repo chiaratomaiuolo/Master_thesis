@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
 from pressure_analysis.labviewdatareading import LabViewdata_reading, plot_with_residuals
-from pressure_analysis.models import expo, double_expo, triple_expo, alpha_expo_scale
+from pressure_analysis.filtering import temperature_butterworth_filtering
+from pressure_analysis.models import expo, double_expo, triple_expo, alpha_expo_scale, LS
 
 __description__ = \
 "This script is used for performing the data analysis of some LabView datasets\
@@ -57,8 +58,8 @@ if __name__ == "__main__":
     axs[2].grid(True)
 
     #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
-    #T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
-    T_eff_filtered = T_eff
+    T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
+    #T_eff_filtered = T_eff
 
     #Fitting P4/T_eff_filtered with an exponential with a power law dependance
     P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
@@ -82,7 +83,27 @@ if __name__ == "__main__":
           tau = {popt[3]} +/- {np.sqrt(pcov[3][3])} [hours],\n')
     
 
-    fig, axs = plot_with_residuals(t_hours, P_eq,  alpha_expo_scale, popt)
+    fig, axs = plot_with_residuals(t_hours, P_eq, alpha_expo_scale, popt)
+    #fig.suptitle(r'$P_{eq}$ as a function of time fitted with $P_{eq}(t) = P_0 -\Delta\cdot (e^{-(\frac{t}{\tau})^{\alpha}})$')
+    axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ [mbar]')
+    axs[0].grid(True)
+    axs[1].set(xlabel=r'Time [hours]', ylabel=r'$\frac{P_{eq}(t) - P_{eq,data}}{P_{eq,data}}$')
+    axs[1].grid(True)
+
+
+    # Trying an alternative modeling - LS model
+    popt, pcov = curve_fit(LS, t_hours, P_eq, p0=[1198., 0.14, 3e-7])
+    print(popt)
+    print(np.sqrt(np.diag(pcov)))
+    print(pcov)
+    
+    print(f'Optimal parameters of {LS.__name__}:\n\
+          P0 = {popt[0]} +/- {np.sqrt(pcov[0][0])} [mbar],\n\
+          2*Asamples/Vgas = {popt[1]} +/- {np.sqrt(pcov[1][1])} [mm],\n\
+          D = {popt[2]} +/- {np.sqrt(pcov[2][2])} [mm^2/s],\n')
+    
+
+    fig, axs = plot_with_residuals(t_hours, P_eq, LS, popt)
     #fig.suptitle(r'$P_{eq}$ as a function of time fitted with $P_{eq}(t) = P_0 -\Delta\cdot (e^{-(\frac{t}{\tau})^{\alpha}})$')
     axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ [mbar]')
     axs[0].grid(True)
