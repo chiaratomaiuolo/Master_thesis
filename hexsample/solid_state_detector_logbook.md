@@ -174,7 +174,7 @@ This makes sense because the events with a single pixel are << number of total e
 #### thickness-pitch space 
 In the following grid of parameters, ENC value has been set. $\text{ENC} = 40$ enc.  
 
-## How to evaluate the best values
+### How to evaluate the best values
 The first key problem is the evaluation of the reciprocal contamination of the two curves. In order to obtain the best efficiency on signal (both $\alpha$ and $\beta$) with the lowest contamination between the two curves.  
 The standard possibilities are three:
 - Fixing the _contamination_ and look at the correspondent _efficiency_ value;
@@ -211,6 +211,13 @@ The readout chain for a single event is the following:
 - The photon is propagated inside the active medium;
 - The event is passed to a `HexagonaReadout*` (it is at this stage that the type of readout has to be defined, different readout are implemented in different `HexagonalReaodut` classes), that contains the trigger facilities, this class returns a `DigiEvent*` corresponding to a certain readout type if the event triggered the ASIC, else returns `None`;
 - The `DigiEvent*` contains all the information for the reconstruction of the event and so represents the informations that the chip will write in file;
-- The digitized event is passed to a `DigiOutputFile*` that simulates the writing of the binary informations from the chip to some desired format of the output file that will be used for teh reconstruction;
+- The digitized event is passed to a `DigiOutputFile*` that simulates the writing of the binary informations from the chip to some desired format of the output file that will be used for the reconstruction;
+- The event is reconstructed and so a `ReconEvent` object is created. 
+
+#### Types of readout
+At this time, the implemented readouts are of three different kinds:
+- `HexagonalReadoutSparse`, this is the sparsest one, every pixel over trigger threshold is saved with its logical position and number of electrons without any proximity rule (this is kind of readout is useful for Massimo for simulating the chip behaviour). The corresponding `DigiEventSparse` contains a lenght-variable pha array and two corresponding arrays containing (in the right order) the column and row numbers of the corresponding logical coordinates;
+- `HexagonalReadoutRectangular`, this is the XPOL-I readout method that implements the ROI. The corresponding `DigiEventRectangular` contains a lenght-variable pha array and a`RegionOfInterest` object that defines the ROI of the event;
+- `HexagonalReadoutCircular`, this is the readout that takes advantage of the ADC parallelization: we identify the highest pixel above trigger threshold and then we take its 6 adjacent neighbors. The correspoding `DigiEventCircular` contains a 7-element array and two `int`s, that correspond to the (`col`, `row`) logical coordinates of the highest pha pixel. 
 
 
