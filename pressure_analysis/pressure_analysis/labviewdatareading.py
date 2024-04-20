@@ -124,7 +124,7 @@ def LabViewdata_reading(paths_to_datafile: list[str], start_times: list[str], st
     return [timestamp, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange, P4, P5, timestamps_diff]
 
 
-def plot_with_residuals(x: np.array, y_data: np.array, model, popt: np.array):
+def plot_with_residuals(x: np.array, y_data: np.array, model, popt: np.array, yerr: np.array=None):
     """Function for creating a figure with two subplots. 
     The first figure contains data errorbars and data fit, the second figure
     plots the residuals normalized with data values. 
@@ -144,7 +144,10 @@ def plot_with_residuals(x: np.array, y_data: np.array, model, popt: np.array):
     """
     fig, axs = plt.subplots(2)
     fig.suptitle(f'Fit using {model.__name__}')
-    axs[0].errorbar(x, y_data, marker='.', linestyle='', label='Data')
+    if yerr is None:
+        axs[0].errorbar(x, y_data, marker='.', linestyle='', label='Data')
+    else:
+        axs[0].errorbar(x, y_data, yerr=yerr, marker='.', linestyle='', label='Data')
     y_fitted = model(x, *popt)
     axs[0].plot(x, y_fitted, label=f'Fit with {model.__name__}')
     axs[0].legend()

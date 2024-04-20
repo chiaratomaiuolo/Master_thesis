@@ -29,7 +29,7 @@ if __name__ == "__main__":
     #Datafiles from 26/02/2024 - AC DME filled, epoxy samples inside, T_Julabo = 22°C
     paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
     start_times = [['2024-02-26 15:50:35.000']]
-    stop_times = [['2024-02-26 19:00:00.000']]
+    stop_times = [['2024-02-26 16:20:00.000']]
     #stop_times = [['2024-03-15 9:00:00.000']]
     log_time = 5000e-3 #s (from logbook)
     T_Julabo = 22 #°C

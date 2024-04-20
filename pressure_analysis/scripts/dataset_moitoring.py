@@ -92,7 +92,7 @@ if __name__ == "__main__":
     paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from2602.txt"]
     start_times = [['2024-02-26 15:51:00.000']]
     stop_times = [[None]]
-    T_Julabo = 40 #°C
+    T_Julabo = 22 #°C
 
 
     #Obtaining interesting data
@@ -134,6 +134,57 @@ if __name__ == "__main__":
     axs[2].plot(timestamps, T6, color='red')
     axs[2].set(xlabel=r'Timestamp', ylabel=r'$T_{\text{ambient}}$ [°C]')
     axs[2].grid(True)
+
+    plt.figure('Pressure variations with epoxy samples inside')
+    plt.title('Pressure variations with epoxy samples inside')
+    plt.errorbar(t_hours[t_hours<180], P_eq[t_hours<180], marker='.', label='First set of epoxy samples')
+
+    paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from0804.txt"]
+    start_times = [['2024-04-08 11:35:35.000']]
+    stop_times = [[None]]
+    T_Julabo = 22 #°C
+
+
+    #Obtaining interesting data
+    data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
+    timestamps = data_list[0]
+    T5 = data_list[6]
+    T6 = data_list[7]
+    P4 = data_list[15]
+    P3 = data_list[13]
+    TJ = data_list[9]
+    t_diffs = data_list[17] #s
+
+    #Computing time in hours and effective temperature
+    t_hours = t_diffs/3600 #hours
+    T_eff = T5+0.16*(T6-T5)/1.16 #°C
+
+    #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
+    #T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
+    T_eff_filtered = T_eff
+
+    #Fitting P4/T_eff_filtered with an exponential with a power law dependance
+    P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
+
+
+    plt.errorbar(t_hours, P_eq, marker='.', label='Second set of epoxy samples')
+    plt.grid()
+    plt.legend()
+
+    def trial(t, P0, Delta, tau):
+        return alpha_expo_scale(t, P0, Delta, 0.5, tau)
+    
+    popt, pcov = curve_fit(trial, t_hours, P_eq, p0=[1204., 120., 48.])
+    print(f'Popt for a model with alpha=0.5')
+    print(popt)
+
+    fig, axs=plot_with_residuals(t_hours, P_eq, trial, popt)
+    fig.suptitle('Dataset from 08/04/2024 - Second set of epoxy samples fitted with alpha expo scale with alpha=0.5')
+    
+    print(f'Asymptotic values for alpha expo scale with alpha=0.5 fixed:')
+    print(f'asymptotic value = {trial(4*popt[-1],*popt)}')
+    print(f'4 charasteric times are {(4*popt[-1])/24} days')
+
 
     plt.show()
     

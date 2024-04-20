@@ -25,7 +25,7 @@ EXPONENTIAL_FITS_ARGPARSER.add_argument('-p0','--list', nargs='+', type=float, r
                                         must be the same as the number of parameters\
                                         of exponential_model function.")
 
-def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.array, hours_start:float=24, hours_lag: float=24):
+def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.array=None, yerr: np.array=None, hours_start:float=24, hours_lag: float=24):
     """Performs an iterative fit on an increasing-lenght dataset until its end.
     At the end of the fit prints the parameters and plots the last fitting 
     curve (containing all data of the dataset).
@@ -50,7 +50,10 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
     popts = []
     hours = [hours_start]
     mask = x < i
-    popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0)
+    if yerr is None:
+        popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0)
+    else:
+        popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0, sigma=yerr[mask], absolute_sigma=True)
 
     print(f'Optimal parameters of {exp_model.__name__} for the first {hours_start} hours of data:')
     popts.append(popt_)
@@ -74,10 +77,10 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
     #Fit considering entire dataset after having iterated on time intervals
     popt_, pcov_ = curve_fit(exp_model, x, y_data, p0=popts[-1])
     popts.append(popt_)
-    hours.append(t_hours[-1])
+    hours.append(x[-1])
     print(f'Optimal parameters for {exp_model.__name__} fit of the entire dataset:')
     print(f'{popt_} +/- {np.sqrt(np.diag(pcov_))}')
-    print(f'Covariance matrix: {pcov_}')
+    print(f'Covariance matrix:\n {pcov_}')
     fig, axs = plot_with_residuals(x, y_data, exp_model, popt_)
     axs[0].set(ylabel=r'$P_{eq}$ [mbar]', xlabel='Time [hours]')
     axs[1].axhline(y=0., color='r', linestyle='-')
@@ -105,9 +108,10 @@ if __name__ == "__main__":
     #paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
 
     #Datafiles from 26/02/2024 - AC DME filled, epoxy samples inside, T_Julabo = 22°C
-    paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
-    paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples_40degrees.txt"]
+    #paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
+    #paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples_40degrees.txt"]
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from2602.txt']
+    #paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from0804.txt']
     '''
     start_times = [['2024-02-26 15:51:00.000','2024-02-27 8:00:00.000', 
                     '2024-02-28 8:00:00.000','2024-02-29 8:00:00.000',
@@ -118,18 +122,30 @@ if __name__ == "__main__":
                    '2024-03-01 22:00:00.000','2024-03-02 22:00:00.000',
                    '2024-03-03 22:00:00.000']]
     '''
-    #start_times = [['2024-02-26 15:50:35.000']]
-    #stop_times = [['2024-02-26 15:58:35.000']]
-    #stop_times = [['2024-03-15 9:00:00.000']]
-    #stop_times = [['2024-02-28 9:51:00.000']]
-    #start_times = [['2024-03-18 00:00:00.000']]
-    #stop_times=[[None]]
-    start_times = [['2024-02-26 15:50:35.000', '2024-03-25 13:00:00.000']]
-    stop_times = [['2024-03-15 9:00:00.000', None]]
+
+    #Data from 26/2 to 4/4, with 22°C, until gas heating
+    start_times = [['2024-02-26 15:50:35.000']]
+    stop_times = [['2024-03-15 9:00:00.000']]
+
+    #Data from 26/2 to 4/4, with 22°C (two different time intervals, in the middle
+    #temperature was set to 40°C)
+    #start_times = [['2024-02-26 15:50:35.000', '2024-03-25 13:00:00.000']]
+    #stop_times = [['2024-03-15 9:00:00.000', None]]
+
+
+
+    #Data from 4/4, with 22°C, after having rose for some day to 40°C
+    #start_times = [['2024-03-26 14:00:00.000']]
+    #stop_times = [[None]]
+
+    #Data from 8/4, with 22°C with new epoxy samples
+    #start_times = [['2024-04-08 11:35:35.000']]
+    #stop_times = [[None]]
+
 
     #Data sampling parameters (from logbook)
     log_time = 5000e-3 #s
-    T_Julabo = 40 #°C
+    T_Julabo = 22 #°C
 
     #Obtaining data
     timestamps, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange,\
@@ -145,19 +161,119 @@ if __name__ == "__main__":
 
     #Computing the equivalent pressure
     P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
+    dP_eq = np.sqrt((77/(P4*100))**2 + (0.05/T_eff_filtered)**2) #relative
+    dP_eq = P_eq*dP_eq #absolute
+    print(dP_eq)
+    print(len(dP_eq[t_hours<500]), len(P_eq[t_hours<500]))
+
+
+    #Loading the second dataset
+    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from0804.txt']
+    #Data from 8/4, with 22°C with new epoxy samples
+    start_times = [['2024-04-08 11:35:35.000']]
+    stop_times = [[None]]
+    #Data sampling parameters (from logbook)
+    log_time = 5000e-3 #s
+    T_Julabo = 22 #°C
+
+    #Obtaining data
+    timestamps0804, T00804, T10804, T20804, T30804, T40804, T50804, T60804, T70804,\
+    TJ0804, P00804, P10804, P20804, P30804, PressFullrange0804, P40804, P50804, \
+    t_diffs0804 = LabViewdata_reading(paths_to_data, start_times, stop_times)
+
+    #Computing time in hours and effective temperature
+    t_hours0804 = t_diffs0804/3600 #hours
+    T_eff0804 = T50804+0.16*(T60804-T50804)/1.16 #°C
+
+    #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
+    T_eff_filtered0804 = temperature_butterworth_filtering(T_eff0804, log_time)
+    #T_eff_filtered = T_eff
+
+    #Computing the equivalent pressure
+    P_eq0804 = (((P40804*100)/(T_eff_filtered0804+273.15))*(T_Julabo+273.15))/100 #mbar
+    dP_eq0804 = np.sqrt((77/(P40804*100))**2 + (0.05/T_eff_filtered0804)**2) #relative
+    dP_eq0804 = P_eq0804*dP_eq0804 #absolute
+    #print(dP_eq0804)
+    #print(len(dP_eq0804), len(P_eq0804))
 
     #Obtaining argument parser objects
     args = EXPONENTIAL_FITS_ARGPARSER.parse_args()
     model = funcs[args.func]
-    hours, popts = iterative_exponential_fit(t_hours[t_hours<500], P_eq[t_hours<500], model,\
-                      p0=args.list, hours_start=38, hours_lag=24)
+
+    #Performing fit for first dataset
+    hours, popts = iterative_exponential_fit(t_hours, P_eq, model,\
+                      p0=args.list, yerr=dP_eq, hours_start=38, hours_lag=24)
     
     fig, axs=plot_with_residuals(t_hours, P_eq, model, popts[-1])
-    fig.suptitle('Full dataset from 26/02/2024')
+    fig.suptitle('Dataset from 26/02/2024 - First set of epoxy samples')
     
-    
+    print(f'Asymptotic values for {model.__name__}')
     print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
     print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
+
+    #Performing fit for second dataset
+    hours0804, popts0804 = iterative_exponential_fit(t_hours0804, P_eq0804, model,\
+                      p0=args.list, yerr=dP_eq0804, hours_start=38, hours_lag=24)
+    
+    fig, axs=plot_with_residuals(t_hours0804, P_eq0804, model, popts0804[-1])
+    fig.suptitle('Dataset from 08/04/2024 - Second set of epoxy samples')
+    
+    print(f'Asymptotic values for {model.__name__}')
+    print(f'asymptotic value = {model(4*popts0804[-1][-1],*popts0804[-1])}')
+    print(f'4 charasteric times are {(4*popts0804[-1][-1])/24} days')
+
+    fig, axs = parameters_plots(hours0804, popts0804)
+    axs[0].set(ylabel=r'$P_0$ [mbar]')
+    axs[1].set(ylabel=r'$\Delta_1$ [mbar]')
+    axs[2].set(ylabel=r'$\alpha$')
+    axs[3].set(ylabel=r'$\tau$ [hours]')
+
+    #Comparing the two datasets
+    fig, axs = plt.subplots(2)
+    axs[0].plot(t_hours[0:len(t_diffs0804)], P_eq[0:len(P_eq0804)], marker='.', linestyle='', label='First dataset')
+    axs[0].plot(t_hours[0:len(t_diffs0804)], model(t_hours[0:len(t_diffs0804)], *popts[-1]), label='First dataset fit')
+    axs[0].plot(t_hours0804, P_eq0804, marker='.', linestyle='', label='Second dataset')
+    axs[0].plot(t_hours0804, model(t_hours0804, *popts0804[-1]), label='Second dataset fit')
+    axs[0].legend()
+    axs[0].grid()
+
+
+    res_normalized = (P_eq - model(t_hours, *popts[-1]))/P_eq
+    res_normalized0804 = (P_eq0804 - model(t_hours0804, *popts0804[-1]))/P_eq0804
+    axs[1].plot(t_hours[0:len(t_diffs0804)], res_normalized[0:len(t_diffs0804)], label='First dataset residuals')
+    axs[1].plot(t_hours0804, res_normalized0804, label='Second dataset residuals')
+    axs[1].legend()
+    axs[1].grid()
+
+
+    #Constructing the plots of the ratio of the two datasets
+    plt.figure('Ratio between datasets')
+    plt.errorbar(t_hours[0:len(t_diffs0804)], (P_eq[0:len(P_eq0804)]/P_eq[0])/(P_eq0804/P_eq0804[0]),\
+                marker='.', label='First dataset / second dataset')
+    plt.grid()
+    plt.legend()
+
+
+
+
+
+
+    '''
+
+    def time_shifted_alpha_expo(t, t0, P0, delta):
+        return (alpha_expo_scale(t+t0, P0, delta, 0.5297, 1471.))
+    
+    initial_params = [300., 1170., 330.]
+    popt, pcov = curve_fit(time_shifted_alpha_expo, t_hours, P_eq, p0=initial_params, sigma=dP_eq, absolute_sigma=True)
+    print(f'{popt} +/- {np.sqrt(np.diag(pcov))}')
+    print(f'Covariance matrix:\n {pcov}')
+
+    print(f'asymptotic value = {time_shifted_alpha_expo(4*1471,*popt)}')
+    print(f'4 charasteric times are {4*1471/24} days')
+
+    fig, axs=plot_with_residuals(t_hours, P_eq, time_shifted_alpha_expo, popt, yerr=dP_eq)
+    fig.suptitle('Dataset from 25/03/2024')
+    '''
     
     '''
     fig, axs = parameters_plots(hours, popts)
