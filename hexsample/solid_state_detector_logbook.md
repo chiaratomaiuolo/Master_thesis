@@ -1,15 +1,15 @@
 # Solid state detector for X-rays (ASIX)
 
 The followind logbook contains informations about the solid state detector to be implemented as an upgrade of the GPD for X-rays.  
-Instead of the gas as conversion stadium, a solid state conversion stadium will be inserted. 
+Instead of the gas as conversion stadium, a solid state conversion stadium will be used in order to achieve an high resolution detector for _imaging_ and _spectroscopy_ (no more polarimetry, tracks are too short). 
 
 ### ASIX proposal review
 
 ![Scheme of the detector](figures/asix_scheme.png)
 
 - Goal: This proposal aims at establishing new X-ray detection systems with simultaneous optimal imaging and spectral capabilities. Position and energy resolution shall be better than:
-- 10 𝝻m
-- 300 eV, at a maximum global readout rate of 100kHz and energy range of 1-50 keV. 
+- 10 $\mu \text{m}$ 
+- 300 eV, at a maximum global readout rate of 100kHz and energy range of 1-50 keV.
 
 
 The ASIX systems will implement a hybrid structure combining:
@@ -21,50 +21,51 @@ signal triggering and smart processing logic;
 ![Principal features of the detector](figures/asix_features.png)
 
 The multiplication does not occur as in gas detectors. Signal pixels are few, less than 10. 
-The main parameters in a detector like this one are the following:
-- width of the SSCS (Solid State Conversion Stadium);
-- noise of the readout chip (that is, by now, XPOL-III);
-- Fano factor, that limits the energy resolution toghether with noise. 
+The main _hardware parameters_ in a detector like this one are the following:
+- **width of the SSCS** (Solid State Conversion Stadium);
+- **noise of the readout chip** (that is, by now, XPOL-III);
+- **Fano factor**, that limits the energy resolution toghether with noise (intrinsic statistical fluctuations in the number of electrons, in this sense this is the liminf for the resolution). 
 
-Having no multiplication of signal, the detector is no more in barely noiseless conditions as in the GPD.  
-**Noise sums in quadrature** and is no longer as tiny wrt single pixel signal as in GPD case. (signal is the sum of pixel signals). 
+Having no multiplication of signal, the detector is no more in barely noiseless conditions as in the GPD. **Pixel noise sums in quadrature** and is no longer as tiny wrt single pixel signal as in GPD case (signal is the sum of pixel signals). 
 The range of particles is a lot shorter than the gas case. 
 
-This chip will have different applications from IXPE, in particular can be used for crystals and in general material analysis. For this tasks, event rate should increase dramatically (of some orders of magnitudes).
+This chip will be used for crystals and in general material analysis. For this tasks, event rate should increase dramatically (at least a factor 10--100).
 
-Because of those main issues, the characteristics to be tuned opportunely are:
-- keeping noise as low as possible;
-- higher chip readout.
+The characteristics to be tuned opportunely are:
+- pixel noise as low as possible;
+- lowen the dead time for enhancing chip readout rate.
 
-First task: resolve K-lines of copper. Those lines are at:
+**First task: resolve K-lines of copper**. Those lines are at:
 - 8.046 keV (principal K-$\alpha$ line)
 - 8.904 keV (principal K-$\beta$ line)
 
 ![Cu forest](figures/Cu_K_line_forest.png)
 
-It is desirable to divide the Ka1+Ka2 from the Kb1+Kb3+Kb5. $\Delta E \simeq 880$ eV.  
+It is desirable to divide the Ka1+Ka2 from the Kb1+Kb3+Kb5. $\Delta \text{E} \simeq 880$ eV.  
 
 Note that resolving the lines is not only an hardware tuning, the **reconstruction can be tuned for obtaining peak division**. 
 
-## Event physics
+#### Event physics
 As previously described, this detector works using photoelectric effect of $\gamma$ on the silicon detector.  
 The physics with zero noise is easy to compute:  
-Being $E_{K\beta} = 8900$ eV, it is easy to compute the mean number of electron-holes pair created by the photoconversion: $<e> = \frac{E_{K\beta}}{E_{ion}} \pm \sqrt{\frac{E_{K\beta}}{E_{ion}} \cdot F}= 2472 \pm 17$ [$e-$]  
-(in Si, where $E_{ion}=3.6$ eV and $F\simeq 0.128$).  
+Being $E_{K\beta} = 8900$ eV, the mean number of electron-holes pair created by the photoconversion in Si (where $E_{ion}=3.6$ eV and $F\simeq 0.128$) is: $<e> = \frac{E_{K\beta}}{E_{ion}} \pm \sqrt{\frac{E_{K\beta}}{E_{ion}} \cdot F}= 2472 \pm 17$ [$e-$].  
 
-This results in the following energy resolution in eV: $R = <e> \cdot E_{ion} = 60$ eV. 
+This results in the following liminf for the energy resolution in eV: $R = <e> \cdot E_{ion} = 60$ eV. 
 
-The principal noise effect is due to _charge sharing_.  
+#### Charge sharing
+The principal noise effect is due to __charge sharing__.  
 With _charge sharing_ it is intended the process of diffusion of the cloud in the medium that cause the electrons to trigger the bordering pixels to the one (or more) where the cloud was formed.  
-This effect damages signal because the electronic noise sums in quadrature:
+This effect damages thre signal because the electronic noise sums in quadrature:
 $$\sigma_{tot} = \sqrt{\sum_{i=1}^{N_{signal}}(\sigma_{<e>} + \sigma_{electronics})^2} $$  
 
 Where:
 - $\sigma_{<e>}$ is the uncertainty due to statistical fluctuations ($\sigma_{<e>} = 17$ [$e-$]);
 - $\sigma_{electronics}$ depends on chip readout and it is measured in ENC (Equivalen Noise Charge = signal charge in electrons that determines a $\frac{S}{N} = 1$).
 
+So clearly the best case scenario in terms of energy resolution are _1 px events_, note that anyway that's not the best case scenario for imaging, where events with few pixels permits the usage of estimator statistics such as the barycenter of charge. 
 
-## Analysis of MC events - defining the interesting metrics
+
+### Analysis of MC events - defining the interesting metrics
 
 Main idea is starting from any reconstruction algorithm and searching for hardware tuning (searching for physical parameters of the detector). After hardware tuning, the reconstruction algorithm can be changed in order to find the most efficient. 
 
@@ -104,18 +105,7 @@ Where:
 
 
 
-
-## What to do next?
-- Redo computations of Carmelo and Luca: [x]
-![Measures to redo](figures/measures.png) 
-
-    Measures done for both $K_{\alpha}$ and $K_{\beta}$. Plots to be done:
-    - Colormap thick-noise-relative variation wrt true energy value [x] (understand how to plot more colormaps together);
-    - Colormap thick-noise-$\frac{FWHM}{\mu}$ [x].
-    - Add numbers in the heatmaps [x]
-
-
-## Hexsample simulation grid 
+### Hexsample simulation grid 
 The parameter space taken into consideration is _thickness-ENC-pitch_.
 
 Where:
@@ -125,7 +115,7 @@ Where:
 In order to represent 2D plots, the 3 possible couples of parameters has been exploited, fixing the third parameter to a reasonable value (often conservative ones).
 
 
-### thickness-ENC space 
+#### thickness-ENC space 
 First goal is to understand for which parameters it is possible to divide the $\alpha$ and $\beta$ peaks, then, we want a resolution that can divide 880 eV. 
 
 Because of that, the first quantity to look at is the energy resolution (in eV).  
@@ -181,7 +171,7 @@ This makes sense because the events with a single pixel are << number of total e
 ![f_evts_1px](figures/f_1px_evtspng.png)
 
 
-### thickness-pitch space 
+#### thickness-pitch space 
 In the following grid of parameters, ENC value has been set. $\text{ENC} = 40$ enc.  
 
 ## How to evaluate the best values
@@ -198,8 +188,29 @@ Those three does not seem the right choice for our scopes, for different reasons
 Anyway, the scope is to distinguish between the two peaks, so, setting a threshold contamination is the right choice. In particular, we want to guarantee a precision (true positive rate) _on alpha peak_, so we fix the contamination of betas on alpha to a low value, such as 2%.
 
 
-
-
-
-
 - plot contributo di fano + contributo elettronico [] 
+
+
+### Simulation of the event readout
+It is necessary now to distinguish the XPOL-III family from the on-development XPOL-IV in terms of hardware features: XPOL-IV would implement an high-level hardware parallelization that would reduce the dead time on readout of the apparatus. Indeed, this would mean changing also the readout mechanism, that seems the right choice considering the different sizes of the events inside a GPD (up to 800 pixels) and inside ASIX (less than 10 pixels). 
+
+#### XPOL-IV hardware design broad-terms 
+The interesting main point for the readout scheme are the following:
+- Pixel division in 8 (16) independent clusters,
+- Every independent cluster maps the adjacent pixels of everyone to different ADC channels in order to permit a further parallelization on readout. The minimum number of ADCs required for guaranteeing this feature is 7. 
+
+#### Readout strategy for XPOL-IV
+
+The latter characteristic aforementioned suggests as parallel readout strategy a 7-pixel digitized track: the higher signal pixel above threshold is taken as _center_ and its 6 neigbors are collected, inspite their content (that could also be 0, this would be informative for the position reconstruction).
+
+#### Readout chain in terms of `Python` code
+The class that implement the simulation and the classes necessary for the readout, digitalization and I/O writing/reading are in the following repository: https://github.com/lucabaldini/hexsample.
+The readout chain for a single event is the following:
+
+- A photon is created using `PhotonList` class, that contains the informations about the source;
+- The photon is propagated inside the active medium;
+- The event is passed to a `HexagonaReadout*` (it is at this stage that the type of readout has to be defined, different readout are implemented in different `HexagonalReaodut` classes), that contains the trigger facilities, this class returns a `DigiEvent*` corresponding to a certain readout type if the event triggered the ASIC, else returns `None`;
+- The `DigiEvent*` contains all the information for the reconstruction of the event and so represents the informations that the chip will write in file;
+- The digitized event is passed to a `DigiOutputFile*` that simulates the writing of the binary informations from the chip to some desired format of the output file that will be used for teh reconstruction;
+
+
