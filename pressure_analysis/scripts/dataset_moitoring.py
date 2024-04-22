@@ -137,13 +137,13 @@ if __name__ == "__main__":
 
     plt.figure('Pressure variations with epoxy samples inside')
     plt.title('Pressure variations with epoxy samples inside')
-    plt.errorbar(t_hours[t_hours<180], P_eq[t_hours<180], marker='.', label='First set of epoxy samples')
+    plt.errorbar(t_hours[t_hours<180], P_eq[t_hours<180], marker='.', label='I set of epoxy samples')
 
+    #II set of epoxy samples
     paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from0804.txt"]
     start_times = [['2024-04-08 11:35:35.000']]
     stop_times = [[None]]
     T_Julabo = 22 #°C
-
 
     #Obtaining interesting data
     data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
@@ -166,11 +166,10 @@ if __name__ == "__main__":
     #Fitting P4/T_eff_filtered with an exponential with a power law dependance
     P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
 
-
-    plt.errorbar(t_hours, P_eq, marker='.', label='Second set of epoxy samples')
-    plt.grid()
-    plt.legend()
-
+    #plt.figure('Pressure variations with epoxy samples inside')
+    plt.errorbar(t_hours, P_eq, marker='.', label='II set of epoxy samples')
+    '''
+    #Performing a fit for the II set fixing alpha to 0.5
     def trial(t, P0, Delta, tau):
         return alpha_expo_scale(t, P0, Delta, 0.5, tau)
     
@@ -184,6 +183,43 @@ if __name__ == "__main__":
     print(f'Asymptotic values for alpha expo scale with alpha=0.5 fixed:')
     print(f'asymptotic value = {trial(4*popt[-1],*popt)}')
     print(f'4 charasteric times are {(4*popt[-1])/24} days')
+    '''
+
+    #Datafiles from 17/04/2024, 10:47 - AC DME filled, III set of epoxy samples inside, T_Julabo = 22°C
+    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from1704.txt']
+    
+    start_times = [['2024-04-19 12:20:00.000']]
+    stop_times = [[None]]
+
+    #Data sampling parameters (from logbook)
+    log_time = 5000e-3 #s
+    T_Julabo = 22 #°C
+
+    #Obtaining interesting data
+    data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
+    timestamps = data_list[0]
+    T5 = data_list[6]
+    T6 = data_list[7]
+    P4 = data_list[15]
+    P3 = data_list[13]
+    TJ = data_list[9]
+    t_diffs = data_list[17] #s
+
+    #Computing time in hours and effective temperature
+    t_hours = t_diffs/3600 #hours
+    T_eff = T5+0.16*(T6-T5)/1.16 #°C
+
+    #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
+    #T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
+    T_eff_filtered = T_eff
+
+    #Fitting P4/T_eff_filtered with an exponential with a power law dependance
+    P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
+
+    #plt.figure('Pressure variations with epoxy samples inside')
+    plt.errorbar(t_hours, P_eq, marker='.', label='III set of epoxy samples')
+    plt.grid()
+    plt.legend()
 
 
     plt.show()

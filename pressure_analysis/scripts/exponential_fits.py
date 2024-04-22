@@ -51,13 +51,67 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
     hours = [hours_start]
     mask = x < i
     if yerr is None:
-        popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0)
+        try:
+            popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0)
+            popts.append(popt_)
+            while mask[-1] == False:
+                mask = x < i
+                hours.append(i)
+                popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=popts[-1])
+                popts.append(popt_)
+                i += hours_lag
+            #Fit considering entire dataset after having iterated on time intervals
+            popt_, pcov_ = curve_fit(exp_model, x, y_data, p0=popts[-1])
+            popts.append(popt_)
+            hours.append(x[-1])
+            print(f'Optimal parameters for {exp_model.__name__} fit of the entire dataset:')
+            print(f'{popt_} +/- {np.sqrt(np.diag(pcov_))}')
+            print(f'Covariance matrix:\n {pcov_}')
+            fig, axs = plot_with_residuals(x, y_data, exp_model, popt_)
+            axs[0].set(ylabel=r'$P_{eq}$ [mbar]', xlabel='Time [hours]')
+            axs[1].axhline(y=0., color='r', linestyle='-')
+            fig.suptitle(f'Fit of {hours[-1]} [hours] with {exp_model.__name__}')
+            return hours, popts
+        except RuntimeError as e:
+            print(e)
+            plt.figure()
+            plt.errorbar(x[mask], y_data[mask], marker='.', label='Dataset')
+            plt.plot(x[mask], exp_model(x[mask], *p0), label='Curve with initial parameters')
+            plt.grid()
+            plt.legend()
+            return None, None
     else:
-        popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0, sigma=yerr[mask], absolute_sigma=True)
+        try:
+            popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0, sigma=yerr[mask], absolute_sigma=True)
+            popts.append(popt_)
+            while mask[-1] == False:
+                mask = x < i
+                hours.append(i)
+                popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=popts[-1])
+                popts.append(popt_)
+                i += hours_lag
+            #Fit considering entire dataset after having iterated on time intervals
+            popt_, pcov_ = curve_fit(exp_model, x, y_data, p0=popts[-1])
+            popts.append(popt_)
+            hours.append(x[-1])
+            print(f'Optimal parameters for {exp_model.__name__} fit of the entire dataset:')
+            print(f'{popt_} +/- {np.sqrt(np.diag(pcov_))}')
+            print(f'Covariance matrix:\n {pcov_}')
+            fig, axs = plot_with_residuals(x, y_data, exp_model, popt_)
+            axs[0].set(ylabel=r'$P_{eq}$ [mbar]', xlabel='Time [hours]')
+            axs[1].axhline(y=0., color='r', linestyle='-')
+            fig.suptitle(f'Fit of {hours[-1]} [hours] with {exp_model.__name__}')
+            return hours, popts
+        except RuntimeError as e:
+            print(e)
+            plt.figure()
+            plt.errorbar(x[mask], y_data[mask], marker='.', label='Dataset')
+            plt.plot(x[mask], exp_model(x[mask], *p0), label='Curve with initial parameters')
+            plt.grid()
+            plt.legend()
+            plt.show()
+            return None, None
 
-    print(f'Optimal parameters of {exp_model.__name__} for the first {hours_start} hours of data:')
-    popts.append(popt_)
-    print(popt_)
     #Plotting pts, fit and residuals for fit of the first 3 hours
     '''
     fig, axs = plot_with_residuals(t_hours[mask], P_eq[mask], exp_model(t_hours[mask], *popt_))
@@ -68,24 +122,6 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
     axs[1].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ normalized residuals')
     axs[1].grid(True)
     '''
-    while mask[-1] == False:
-        mask = x < i
-        hours.append(i)
-        popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=popts[-1])
-        popts.append(popt_)
-        i += hours_lag
-    #Fit considering entire dataset after having iterated on time intervals
-    popt_, pcov_ = curve_fit(exp_model, x, y_data, p0=popts[-1])
-    popts.append(popt_)
-    hours.append(x[-1])
-    print(f'Optimal parameters for {exp_model.__name__} fit of the entire dataset:')
-    print(f'{popt_} +/- {np.sqrt(np.diag(pcov_))}')
-    print(f'Covariance matrix:\n {pcov_}')
-    fig, axs = plot_with_residuals(x, y_data, exp_model, popt_)
-    axs[0].set(ylabel=r'$P_{eq}$ [mbar]', xlabel='Time [hours]')
-    axs[1].axhline(y=0., color='r', linestyle='-')
-    fig.suptitle(f'Fit of {hours[-1]} [hours] with {exp_model.__name__}')
-    return hours, popts
 
 def parameters_plots(x, popts):
     #Plotting trend of parameters of the fit model
@@ -253,8 +289,48 @@ if __name__ == "__main__":
     plt.grid()
     plt.legend()
 
+    #Datafiles from 17/04/2024, 10:47 - AC DME filled, III set of epoxy samples inside, T_Julabo = 22°C
+    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from1704.txt']
+    
+    start_times = [['2024-04-19 12:21:00.000']]
+    stop_times = [[None]]
 
+    #Data sampling parameters (from logbook)
+    log_time = 5000e-3 #s
+    T_Julabo = 22 #°C
 
+    #Obtaining data
+    timestamps, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange,\
+    P4, P5, t_diffs = LabViewdata_reading(paths_to_data, start_times, stop_times)
+
+    #Computing time in hours and effective temperature
+    t_hours = t_diffs/3600 #hours
+    T_eff = T5+0.16*(T6-T5)/1.16 #°C
+
+    #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
+    T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
+    #T_eff_filtered = T_eff
+
+    #Computing the equivalent pressure
+    P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
+    dP_eq = np.sqrt((77/(P4*100))**2 + (0.05/T_eff_filtered)**2) #relative
+    dP_eq = P_eq*dP_eq #absolute
+    #print(dP_eq)
+    #print(len(dP_eq), len(P_eq))
+
+    #Performing fit for III dataset
+    hours, popts = iterative_exponential_fit(t_hours, P_eq, model,\
+                      p0=args.list, hours_start=38, hours_lag=24)
+    
+    if popts is not None:
+    
+        fig, axs=plot_with_residuals(t_hours, P_eq, model, popts[-1])
+        fig.suptitle('Dataset from 17/04/2024 - Third set of epoxy samples')
+        
+        print(f'Asymptotic values for {model.__name__}')
+        print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
+        print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
+    
 
 
 
