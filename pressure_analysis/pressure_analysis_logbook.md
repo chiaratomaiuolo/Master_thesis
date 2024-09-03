@@ -371,7 +371,7 @@ We can see that parameters seems more stable and that, in particular, $\alpha$ i
 
 Residuals are minor and have more stable trend, noticing that the day-night effect tends to grow as pressure decreases (ask Leo for gas-vapour curves, could explain this trend?)
 
-Issue: fit does not converge if we take a time band < 38 hours. 
+**Issue: fit does not converge if we take a time band < 38 hours.** 
 
 
 
@@ -386,6 +386,60 @@ To do list
 
 - look at some literature for exponential plots []
 - look at covariance matrix of params! []
+
+
+22/04/2024
+
+- The issue of convengerce under 38 hours of data has not been fixed (and understood). []
+
+### Comparison of the results between the three sets of epoxy samples 
+
+In this months, three sets of absorption samples have been used for measuring the absorption always starting from the same P-T conditions for the gas inside the AC:
+- $P_0 \simeq 1200$ mbar;
+- $T_5 \simeq 22^{\circ}$ C
+
+#### Characteristics of the three sets of samples
+
+- **I set of samples**  
+It consists in 3 circular crowns, divided by metallic nuts (we consider the metal inactive for the absorption), in the following table the measures _before absorption_ (and before degassing and moisture evaporation):
+
+![DME_with_samples_double_fit](plots/first_epoxy_set.png)
+
+$\frac{V_I}{S_I} = 0.7766 \text{ mm}$
+
+_Missing discussion on heating and cooling with the first data samples. In poster maybe just a sentence about this (there is no much space)_
+
+
+- **II set of samples**  
+It consists in 3 circular crowns, divided by metallic nuts (we consider the metal inactive for the absorption), in the following table the measures _before absorption_ (and before degassing and moisture evaporation). As we can see in table, the difference between the I and II set is on volumes:
+
+![DME_with_samples_double_fit](plots/second_epoxy_set.png)
+
+$\frac{V_{II}}{S_{II}} = 0.3198 \text{ mm} \rightarrow \frac{I}{II} = 2.42$
+
+
+- **III set of samples**  
+It consists in a single epoxy block, the measures are in the following table:
+![DME_with_samples_double_fit](plots/third_epoxy_set.png)
+
+$\frac{V_{III}}{S_{III}} = 1.8880 \text{ mm} \rightarrow \frac{I}{III} = 0.4113, \frac{II}{III} = 0.1694$
+
+
+
+
+--------
+#### What we have achieved so far
+- Confirmed that the decrease in pressure inside GPDs is effectively due to the absorption of the gas by the glue;
+- Is is a _subdiffusive phenomenon_, which speed of the process is dependent on a parameter, $\alpha$ that is not fixable by now, because is very dependent by the internal homogeneity of the epoxy sample, impossible to guarantee for the size of our samples. Anyway, leaving $\alpha$ as free parameter, the following model works pretty good:
+$$P(t; P_0, \Delta_P, \alpha, \tau) = P_0 - \Delta_P(1 - e^{(\frac{t}{\tau})^{\alpha}})$$
+- We can try to fit the GPD 38 with the model above and see what happens, for sure the parameters found for the sets epoxy samples aren't representative for the detector, not only because of the size, probably also because of the curing process conditions;
+- Anyway, the procedure is fine if the goal is finding a glue that do not absorbs gas;
+- Spinner for future epoxy samples?  
+
+
+
+
+
 
 
 

@@ -25,14 +25,15 @@ if __name__ == "__main__":
     start_times = [None]
     stop_times = [None]
     '''
-    '''
+    
     #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled.
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
-    '''
+    start_times = [['2024-02-12 15:32:00.000', '2024-02-19 18:30:00.000']]
+    stop_times = [['2024-02-19 11:30:00.000', '2024-02-20 12:30:00.000']]
 
-    '''
-    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selected times intervals where T_ambient is stable.
     
+    #Datafile from 12/2/2024 to 20/2/2024 - AC DME filled, selected times intervals where T_ambient is stable.
+    '''
     start_times = [['2024-02-12 16:00:00.000', '2024-02-13 16:30:00.000', '2024-02-14 16:00:00.000',\
                    '2024-02-15 16:00:00.000', '2024-02-16 16:00:00.000','2024-02-17 16:00:00.000',\
                     '2024-02-18 16:00:00.000', '2024-02-21 16:00:00.000', '2024-02-22 16:00:00.000']]
@@ -40,6 +41,8 @@ if __name__ == "__main__":
                    '2024-02-15 20:00:00.000','2024-02-16 16:00:00.001', '2024-02-17 20:00:00.000', \
                    '2024-02-18 20:00:00.000', '2024-02-21 20:00:00.000', '2024-02-22 18:00:00.000']]
     '''
+    T_Julabo = 22 #°C
+    
     
     
     '''
@@ -87,12 +90,13 @@ if __name__ == "__main__":
                    '2024-03-01 22:00:00.000','2024-03-02 22:00:00.000',
                    '2024-03-03 22:00:00.000']]
     '''
-
+    '''
     paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples_40degrees.txt"]
     paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from2602.txt"]
     start_times = [['2024-02-26 15:51:00.000']]
     stop_times = [[None]]
     T_Julabo = 22 #°C
+    '''
 
 
     #Obtaining interesting data

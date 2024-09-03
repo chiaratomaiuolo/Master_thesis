@@ -200,7 +200,7 @@ if __name__ == "__main__":
     dP_eq = np.sqrt((77/(P4*100))**2 + (0.05/T_eff_filtered)**2) #relative
     dP_eq = P_eq*dP_eq #absolute
     print(dP_eq)
-    print(len(dP_eq[t_hours<500]), len(P_eq[t_hours<500]))
+    print(len(dP_eq), len(P_eq))
 
 
     #Loading the second dataset
@@ -242,6 +242,12 @@ if __name__ == "__main__":
     
     fig, axs=plot_with_residuals(t_hours, P_eq, model, popts[-1])
     fig.suptitle('Dataset from 26/02/2024 - First set of epoxy samples')
+
+    fig, axs = parameters_plots(hours, popts)
+    axs[0].set(ylabel=r'$P_0$ [mbar]')
+    axs[1].set(ylabel=r'$\Delta_1$ [mbar]')
+    axs[2].set(ylabel=r'$\alpha$')
+    axs[3].set(ylabel=r'$\tau$ [hours]')
     
     print(f'Asymptotic values for {model.__name__}')
     print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
@@ -266,28 +272,29 @@ if __name__ == "__main__":
 
     #Comparing the two datasets
     fig, axs = plt.subplots(2)
-    axs[0].plot(t_hours[0:len(t_diffs0804)], P_eq[0:len(P_eq0804)], marker='.', linestyle='', label='First dataset')
-    axs[0].plot(t_hours[0:len(t_diffs0804)], model(t_hours[0:len(t_diffs0804)], *popts[-1]), label='First dataset fit')
-    axs[0].plot(t_hours0804, P_eq0804, marker='.', linestyle='', label='Second dataset')
-    axs[0].plot(t_hours0804, model(t_hours0804, *popts0804[-1]), label='Second dataset fit')
+    axs[0].plot(t_hours[0:len(t_diffs0804)], P_eq[0:len(P_eq0804)], marker='.', linestyle='', color='tab:blue', label='First dataset')
+    axs[0].plot(t_hours[0:len(t_diffs0804)], model(t_hours[0:len(t_diffs0804)], *popts[-1]), color='tab:orange', label=fr'First dataset, $\alpha$ = {popts[-1][2]:.2f}')
+    axs[0].plot(t_hours0804, P_eq0804, marker='.', linestyle='', color='tab:green', label='Second dataset')
+    axs[0].plot(t_hours0804, model(t_hours0804, *popts0804[-1]),color='tab:red', label=fr'Second dataset $\alpha$ = {popts0804[-1][2]:.2f}')
     axs[0].legend()
     axs[0].grid()
 
 
     res_normalized = (P_eq - model(t_hours, *popts[-1]))/P_eq
     res_normalized0804 = (P_eq0804 - model(t_hours0804, *popts0804[-1]))/P_eq0804
-    axs[1].plot(t_hours[0:len(t_diffs0804)], res_normalized[0:len(t_diffs0804)], label='First dataset residuals')
-    axs[1].plot(t_hours0804, res_normalized0804, label='Second dataset residuals')
+    axs[1].plot(t_hours[0:len(t_diffs0804)], res_normalized[0:len(t_diffs0804)], color='tab:blue', label='First dataset residuals')
+    axs[1].plot(t_hours0804, res_normalized0804, color='tab:green', label='Second dataset residuals')
     axs[1].legend()
     axs[1].grid()
 
-
+    '''
     #Constructing the plots of the ratio of the two datasets
     plt.figure('Ratio between datasets')
     plt.errorbar(t_hours[0:len(t_diffs0804)], (P_eq[0:len(P_eq0804)]/P_eq[0])/(P_eq0804/P_eq0804[0]),\
                 marker='.', label='First dataset / second dataset')
     plt.grid()
     plt.legend()
+    '''
 
     #Datafiles from 17/04/2024, 10:47 - AC DME filled, III set of epoxy samples inside, T_Julabo = 22°C
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from1704.txt']
@@ -320,14 +327,30 @@ if __name__ == "__main__":
 
     #Performing fit for III dataset
     hours, popts = iterative_exponential_fit(t_hours, P_eq, model,\
-                      p0=args.list, hours_start=38, hours_lag=24)
+                      p0=args.list, hours_start=100, hours_lag=24)
+    
+    axs[0].plot(t_hours, P_eq, marker='.', linestyle='', color='tab:purple', label='Third dataset')
     
     if popts is not None:
+
+        axs[0].plot(t_hours, model(t_hours, *popts[-1]), color='tab:pink', label=fr'Third dataset, $\alpha$ = {popts[-1][2]:.2f}')
+        axs[0].legend()
+        axs[0].set(xlabel=r't [hours]', ylabel=r'$P_{eq}$ [mbar]')
+        res_normalized = (P_eq - model(t_hours, *popts[-1]))/P_eq
+        axs[1].plot(t_hours, res_normalized, color='tab:purple', label='Third dataset residuals')
+        axs[1].legend()
+        axs[1].set(xlabel=r't [hours]', ylabel=r'$\frac{P_{eq} - P(t; P_0, \Delta, \alpha, \tau)}{P_{eq}}$')
     
         fig, axs=plot_with_residuals(t_hours, P_eq, model, popts[-1])
         fig.suptitle('Dataset from 17/04/2024 - Third set of epoxy samples')
+
+        fig, axs = parameters_plots(hours, popts)
+        axs[0].set(ylabel=r'$P_0$ [mbar]')
+        axs[1].set(ylabel=r'$\Delta_1$ [mbar]')
+        axs[2].set(ylabel=r'$\alpha$')
+        axs[3].set(ylabel=r'$\tau$ [hours]')
         
-        print(f'Asymptotic values for {model.__name__}')
+        print(f'Asymptotic values for {model.__name__}, third set of epoxy samples')
         print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
         print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
     

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from scipy.fft import fft, fftfreq
 from scipy.optimize import curve_fit
-from scipy.signal import butter, sosfilt
+from scipy.signal import butter, convolve, medfilt, sosfilt, sosfiltfilt, firwin
 
 from pressure_analysis.labviewdatareading import LabViewdata_reading
 from pressure_analysis.models import alpha_expo_scale
@@ -36,11 +36,21 @@ if __name__ == "__main__":
     stop_times = [['2024-02-19 11:00:00.000']]
     log_time = 5000e-3 #s (from logbook)
     '''
+    '''
     paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
     start_times = [['2024-02-26 15:50:35.000']]
     stop_times = [[None]]
     T_Julabo = 22 #°C
     log_time = 5000e-3 #s (from logbook)
+    '''
+
+    #Datafile from 19/4/2024 to - , filling GPD in BFS with DME.
+    paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from1704.txt"]
+    start_times = [['2024-04-19 12:26:30.000']]
+    stop_times = [[None]]
+    #start_times = [['2024-05-04 23:00:00.000']]
+    #stop_times = [['2024-05-05 8:00:00.000']]
+    log_time = 5000e-3 #s
 
     '''
     #Datafiles from 26/02/2024 - AC DME filled, epoxy samples inside, T_Julabo = 22°C
@@ -55,9 +65,11 @@ if __name__ == "__main__":
     #Obtaining interesting data
     data_list = LabViewdata_reading(paths_to_data, start_times, stop_times)
     timestamps = data_list[0]
+    T2 = data_list[3] #GPD temperature
     T5 = data_list[6] #T of thermoregulator liquid consequently outside chamber
     T6 = data_list[7] #Room temperature
     P4 = data_list[15] #Pressure inside chamber
+    P5 = data_list[16]
     TJ = data_list[9] #Temperature set for Julabo termoregulator
     t_diffs = data_list[17] #s from starting point (set as t=0 s)
 
@@ -70,21 +82,25 @@ if __name__ == "__main__":
     T_eff = T5+0.16*(T6-T5)/1.16 #°C
     #T_eff = T_eff + 273.15 #Kelvin
 
+
     #Looking at overall data - P4, T5, T_room
-    fig, axs = plt.subplots(4)
+    fig, axs = plt.subplots(5)
     fig.suptitle(fr'Absolute pressure inside AC and corresponding temperature - Gas DME,$T_{{Julabo}}$ = {np.mean(TJ):.2f}°C')
     axs[0].plot(timestamps, P4, color='firebrick')
     axs[0].set(xlabel=r'Timestamp', ylabel=r'$P_4$ [mbar]')
     axs[0].grid(True)
-    axs[1].plot(timestamps, T5)
-    axs[1].set(xlabel=r'Timestamp', ylabel=r'$T_5$ [°C]')
+    axs[1].plot(timestamps, P5, color='tab:orange')
+    axs[1].set(xlabel=r'Timestamp', ylabel=r'$P_5$ [mbar]')
     axs[1].grid(True)
-    axs[2].plot(timestamps, T6, color='red')
-    axs[2].set(xlabel=r'Timestamp', ylabel=r'$T_{\text{ambient}}$ [°C]')
+    axs[2].plot(timestamps, T5)
+    axs[2].set(xlabel=r'Timestamp', ylabel=r'$T_5$ [°C]')
     axs[2].grid(True)
-    axs[3].plot(timestamps, T_eff, color='green')
-    axs[3].set(xlabel=r'Timestamp', ylabel=r'$T_{\text{eff}}$ [°C]')
+    axs[3].plot(timestamps, T6, color='red')
+    axs[3].set(xlabel=r'Timestamp', ylabel=r'$T_{\text{ambient}}$ [°C]')
     axs[3].grid(True)
+    axs[4].plot(timestamps, T_eff, color='green')
+    axs[4].set(xlabel=r'Timestamp', ylabel=r'$T_{\text{eff}}$ [°C]')
+    axs[4].grid(True)
     
     #Performing FT of the effective temperature and of pressure inside chamber
     #in order to understand how to construct a Butterworth filter. 
@@ -102,6 +118,11 @@ if __name__ == "__main__":
     Tft = fft((T_eff-np.mean(T_eff))/(np.max(T_eff)-np.min(T_eff))) #DFT of effective temperature
     T6ft = fft((T6-np.mean(T6))/(np.max(T6)-np.min(T6))) #DFT of room temperature
     Pft = fft((P4-np.mean(P4))/(np.max(P4)-np.min(P4))) #DFT of effective pressure
+    #Performing DFTs OF MINMAX NORMALIZED QUANTITIES and generating the right frequency array
+    T2ft = fft((T2-np.mean(T2))/(np.max(T2)-np.min(T2))) #DFT of effective temperature
+    #T6ft = fft((T6-np.mean(T6))/(np.max(T6)-np.min(T6))) #DFT of room temperature
+    P5ft = fft((P5-np.mean(P5))/(np.max(P5)-np.min(P5))) #DFT of effective pressure
+
 
     #Constructing a lowpass Butterworth filter with defined cutoff frequency
     f_cutoff = 1/(1.5*3600) #Hz
@@ -125,13 +146,67 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid()
 
+    #Plotting the absolute value of interesting spectra
+    plt.figure('DFTs P5')
+    #plt.plot(xf, 2.0/N * np.abs(T6ft[0:N//2]), label=r'$T_{6} - \mu_{T_{6}}$ DFT') #Room temperature FT
+    plt.plot(xf, 2.0/N * np.abs(T2ft[0:N//2]), label=r'$T_{2} - \mu_{T_{2}}$ DFT') #The factor 2.0/N is for normalization,(remember the Nyquist frequency expression)
+    plt.plot(xf, 2.0/N * np.abs(P5ft[0:N//2]), label=r'$P_{5} - \mu_{P_{4}}$ DFT')
+    plt.plot(xf, 2.0/N * np.abs(T_butter_ft[0:N//2]), label=r'$T_{2,filtered} - \mu_{T_{2,filtered}}$ DFT')
+    plt.axvline(1/(24*3600), label=r'$\frac{1}{24}$ $\frac{1}{h}$')
+    plt.xlim(0, 0.0003)
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('DFT coefficient')
+    plt.legend()
+    plt.grid()
+
     #Some vlines for reference
     #plt.axvline(1.16e-05, color='r', linestyle='dashed', label='1/24h line')
     #plt.axvline(2.31e-05, color='pink', linestyle='dashed', label='1/12h line')
     #plt.axvline(1/3600, color='brown', label='1/1h line')
 
+    def butter_lowpass(cutoff, fs, order): 
+        normal_cutoff = cutoff / (0.5*fs) 
+        sos = butter(order, normal_cutoff, btype='low', output='sos')
+        return sos
+    def butter_lowpass_filtfilt(data, cutoff, fs, order):
+        sos = butter_lowpass(cutoff, fs, order=order)
+        y = sosfiltfilt(sos, data) 
+        return y
+    
+    def butter_bandstop(lowcut, highcut, fs, order):
+        nyq = 0.5 * fs
+        low = lowcut / nyq
+        high = highcut / nyq
+        sos = butter(order, [low, high], btype='bandstop', output='sos')
+        return sos
+    
+    def butter_bandstop_filtfilt(data, lowcut, highcut, fs, order):
+        sos = butter_bandstop(lowcut, highcut, fs, order)
+        y = sosfiltfilt(sos, data)
+        return y
+    
+    def window_filtering(data, lowcut, highcut):
+        h = firwin(501, [lowcut, highcut], window='hamming')
+        y = convolve(data, h, mode='same')
+        return y
+
+    
+    #Computing the equivalent pressure
+    P_eq = (((P5*100)/(T2+273.15))*(np.mean(T2)+273.15))/100 #mbar
+    #P_eq1 = butter_lowpass_filtfilt(P_eq, 1/(48*3600), 1/T, 4)
+    P_eq1 = butter_bandstop_filtfilt(P_eq, 1/(48*3600), 1/(18*3600), 1/T, 4)
+
+    plt.figure()
+    #plt.errorbar(timestamps, P5)
+    plt.errorbar(timestamps, P_eq, label='a')
+    plt.errorbar(timestamps, P_eq1, label='b')
+    plt.errorbar(timestamps, P5, label='d')
+    plt.legend()
+
+
     #Plotting hysteresis curves: P as a function of the effective temperature
     #Fitting data with a single exponential in order to compare pts with expected values
+    '''
     
     #popt, pcov = curve_fit(expo, t_hours, P4, p0=[3.75, 10., 1140.])
     popt, pcov = curve_fit(alpha_expo_scale, t_hours, P4, p0=[1201., 3.75, 10., 1140.])
@@ -180,5 +255,6 @@ if __name__ == "__main__":
     plt.xlabel(r'time [hours]')
     plt.legend()
     plt.grid()
+    '''
     
     plt.show()

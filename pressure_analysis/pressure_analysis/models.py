@@ -18,7 +18,7 @@ def alpha_expo_scale(t, P0, Delta, alpha, tau):
     It should describe processes of subdiffusion (alpha<1) or superdiffusion
     (alpha>1).
     """
-    return P0 - (Delta*(1-np.exp(-((np.abs(t/tau))**alpha))))
+    return P0 - (Delta*(1-np.exp(-((t/tau)**alpha))))
 
 def double_expo(x, P0, Delta1, tau1, Delta2, tau2):
     """Decreasing double exponential

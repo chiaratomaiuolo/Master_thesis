@@ -50,13 +50,13 @@ As previously described, this detector works using photoelectric effect of $\gam
 The physics with zero noise is easy to compute:  
 Being $E_{K\beta} = 8900$ eV, the mean number of electron-holes pair created by the photoconversion in Si (where $E_{ion}=3.6$ eV and $F\simeq 0.128$) is: $<e> = \frac{E_{K\beta}}{E_{ion}} \pm \sqrt{\frac{E_{K\beta}}{E_{ion}} \cdot F}= 2472 \pm 17$ [$e-$].  
 
-This results in the following liminf for the energy resolution in eV: $R = <e> \cdot E_{ion} = 60$ eV. 
+This results in the following liminf for the energy resolution in eV: $R = 17 \cdot E_{ion} = 61.2$ eV. 
 
 #### Charge sharing
 The principal noise effect is due to __charge sharing__.  
 With _charge sharing_ it is intended the process of diffusion of the cloud in the medium that cause the electrons to trigger the bordering pixels to the one (or more) where the cloud was formed.  
 This effect damages thre signal because the electronic noise sums in quadrature:
-$$\sigma_{tot} = \sqrt{\sum_{i=1}^{N_{signal}}(\sigma_{<e>} + \sigma_{electronics})^2} $$  
+$$\sigma_{tot} = \sqrt{\sigma_{<e>}^2 + \sum_{i=1}^{N_{signal}} (\sigma_{electronics})^2} $$  
 
 Where:
 - $\sigma_{<e>}$ is the uncertainty due to statistical fluctuations ($\sigma_{<e>} = 17$ [$e-$]);
