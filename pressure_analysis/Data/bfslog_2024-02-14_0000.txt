@@ -1,4 +1,4 @@
-Timestamp	T0 - GPD IFplate (°C)	T1 - GPD drift (°C)	T2 - GPD mech (°C)	T3 - Tank TC (°C)	T4 - GTC TF Outlet (°C)	T5 - AC TF Outlet (°C)	T6 - Ambient (°C)	T7 - Tank PT100 (°C)	TJulaboInternal (°C)	P0 - Setra AC (mbar)	P1 - Setra Filling (mbar)	P2 - Omega AC (mbar)	P3 - Omega GTC (mbar)	PressFullrange (mbar)	P4 - MKS AC (mbar)	P5 - MKS GPD (mbar)
+#Timestamp	T0 - GPD IFplate (ï¿½C)	T1 - GPD drift (ï¿½C)	T2 - GPD mech (ï¿½C)	T3 - Tank TC (ï¿½C)	T4 - GTC TF Outlet (ï¿½C)	T5 - AC TF Outlet (ï¿½C)	T6 - Ambient (ï¿½C)	T7 - Tank PT100 (ï¿½C)	TJulaboInternal (ï¿½C)	P0 - Setra AC (mbar)	P1 - Setra Filling (mbar)	P2 - Omega AC (mbar)	P3 - Omega GTC (mbar)	PressFullrange (mbar)	P4 - MKS AC (mbar)	P5 - MKS GPD (mbar)
 2024-02-14 00:00:07.232	23.06	23.09	22.74	23.93	22.99	22.81	23.44	22.90	22.00	 899	  -1	1189	1013	4.800E-8	1200	 739
 2024-02-14 00:00:12.234	23.05	23.04	22.74	24.04	23.02	22.81	23.45	22.90	22.01	 900	  -1	1189	1012	4.800E-8	1200	 739
 2024-02-14 00:00:17.234	23.08	23.07	22.70	24.45	22.97	22.79	23.40	22.87	22.00	 900	  -1	1191	1011	4.800E-8	1200	 739

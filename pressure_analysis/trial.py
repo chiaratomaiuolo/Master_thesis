@@ -3,8 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 from scipy.optimize import curve_fit
+from uncertainties import unumpy, ufloat
 
 from pressure_analysis.models import expo, alpha_expo_scale, double_expo, empty_AC_exp
+from pressure_analysis.labviewdatareading import plot_with_residuals
 
 
 """ This script is done for preparing a plot for the PM 2024 poster
@@ -13,18 +15,39 @@ from pressure_analysis.models import expo, alpha_expo_scale, double_expo, empty_
 # Loading data
 #AC DME filled without epoxy samples
 V_gas = 165688 #mm^3
-t0, T_Julabo0, T2_0, T5_0, T6_0, P4_0, P5_0 = np.loadtxt('empty_AC_epoxy_sample_data.txt', unpack=True)
-
-t1, T_Julabo1, T2_1, T5_1, T6_1, P4_1, P5_1  = np.loadtxt('first_epoxy_sample_data.txt', unpack=True)
+t0, T_Julabo0, T2_0, dT2_0,  T5_0,  dT5_0, T6_0, dT6_0, P4_0, dP4_0, P5_0, dP5_0 = np.loadtxt('empty_AC_epoxy_sample_data_with_rms.txt', unpack=True)
+t1, T_Julabo1, T2_0, dT2_1,  T5_1,  dT5_1, T6_1, dT6_1, P4_1, dP4_1, P5_1, dP5_1  = np.loadtxt('first_epoxy_sample_data.txt', unpack=True)
 V1 = 8522 #mm**3
 S1 = 10972 #mm**2
-t2, T_Julabo2, T2_2, T5_2, T6_2, P4_2, P5_2 = np.loadtxt('second_epoxy_sample_data.txt', unpack=True)
+t2, T_Julabo2, T2_2, dT2_2,  T5_2,  dT5_2, T6_2, dT6_2, P4_2, dP4_2, P5_2, dP5_2 = np.loadtxt('second_epoxy_sample_data.txt', unpack=True)
 V2 = 3305 #mm**3
 S2 = 10333 #mm**2
-t3, T_Julabo3, T2_3, T5_3, T6_3, P4_3, P5_3 = np.loadtxt('third_epoxy_sample_data.txt', unpack=True)
+t3, T_Julabo3, T2_3, dT2_3,  T5_3,  dT5_3, T6_3, dT6_3, P4_3, dP4_3, P5_3, dP5_3 = np.loadtxt('third_epoxy_sample_data.txt', unpack=True)
 V3 = 9239 #mm**3
 S3 = 4893 #mm**2
-tGPD, T_JulaboGPD, T2_GPD, T5_GPD, T6_GPD, P4_GPD, P5_GPD = np.loadtxt('GPD_data.txt', unpack=True)
+tGPD, T_JulaboGPD, T2_GPD, dT2_GPD, T5_GPD, dT5_GPD, T6_GPD, dT6_GPD, P4_GPD, dP4_GPD, P5_GPD, dP5_GPD = np.loadtxt('GPD_data.txt', unpack=True)
+
+# Defining unumpy.arrays with nominal value and uncertainties
+T_Julabo0 = ufloat(22, 0.1)
+
+P4_0 = unumpy.uarray(P4_0, np.full(len(P4_0), 0.12))
+T5_0 = unumpy.uarray(T5_0,  np.full(len(T5_0), 0.1))
+T5_0 = T5_0+0.16*(T6_0-T5_0)/1.16 #°C
+
+P4_1 = unumpy.uarray(P4_1, np.full(len(P4_1), 0.12))
+T5_1 = unumpy.uarray(T5_1,  np.full(len(T5_1), 0.1))
+T5_1 = T5_1+0.16*(T6_1-T5_1)/1.16 #°C
+
+P4_2 = unumpy.uarray(P4_2, np.full(len(P4_2), 0.12))
+T5_2 = unumpy.uarray(T5_2,  np.full(len(T5_2), 0.1))
+T5_2 = T5_2+0.16*(T6_2-T5_2)/1.16 #°C
+
+P4_3 = unumpy.uarray(P4_3, np.full(len(P4_3), 0.12))
+T5_3 = unumpy.uarray(T5_3,  np.full(len(T5_3), 0.1))
+T5_3 = T5_3+0.16*(T6_3-T5_3)/1.16 #°C
+
+P4_GPD = unumpy.uarray(P4_GPD, np.full(len(P4_GPD), 0.12))
+T2_GPD = unumpy.uarray(T2_GPD,  np.full(len(T2_GPD), 0.1))
 
 #Computing the equivalent pressures
 P_eq0 = (((P4_0*100)/(T5_0+273.15))*(T_Julabo0+273.15))/100 #mbar
@@ -37,32 +60,208 @@ def line(x, m, q):
     return m*x+q
 
 #Fitting the curves
-popt0, pcov0 = curve_fit(expo, t0, P_eq0, p0=[1199., 2., 7.])
+popt0, pcov0 = curve_fit(expo, t0, unumpy.nominal_values(P_eq0), sigma=unumpy.std_devs(P_eq0), p0=[1201., 5., 7.])
 diag0 = np.sqrt(np.diag(pcov0))
 print(f'Zero dataset optimal parameters: {popt0} +/- {np.sqrt(np.diag(pcov0))}')
-popt1, pcov1 = curve_fit(alpha_expo_scale, t1, P_eq1, p0=[1199., 549., 0.53, 1470/24])
+popt1, pcov1 = curve_fit(alpha_expo_scale, t1, unumpy.nominal_values(P_eq1), sigma=unumpy.std_devs(P_eq1), p0=[1200., 627., 0.5147, 87])
 diag1 = np.sqrt(np.diag(pcov1))
 print(f'First dataset optimal parameters: {popt1} +/- {np.sqrt(np.diag(pcov1))}')
-popt2, pcov2 = curve_fit(alpha_expo_scale, t2, P_eq2, p0=[1199., 134., 0.72, 49/24])
+popt2, pcov2 = curve_fit(alpha_expo_scale, t2, unumpy.nominal_values(P_eq2), sigma=unumpy.std_devs(P_eq2), p0=[1199., 134., 0.72, 49/24])
 diag2 = np.sqrt(np.diag(pcov2))
 print(f'Second dataset optimal parameters: {popt2} +/- {np.sqrt(np.diag(pcov2))}')
-popt3, pcov3 = curve_fit(alpha_expo_scale, t3, P_eq3, p0=[1199., 1000., 0.48, 7873/24])
+popt3, pcov3 = curve_fit(alpha_expo_scale, t3, unumpy.nominal_values(P_eq3), sigma=unumpy.std_devs(P_eq3), p0=[1199., 1000., 0.48, 7873/24])
 diag3 = np.sqrt(np.diag(pcov3))
 print(f'Third dataset optimal parameters: {popt3} +/- {np.sqrt(np.diag(pcov3))}')
+poptGPD, pcovGPD = curve_fit(alpha_expo_scale, tGPD, unumpy.nominal_values(P_eqGPD), sigma=unumpy.std_devs(P_eqGPD), p0=[1199., 1000., 0.48, 7873/24])
+diagGPD = np.sqrt(np.diag(pcov3))
+print(f'Third dataset optimal parameters: {poptGPD} +/- {np.sqrt(np.diag(pcovGPD))}')
+
+#Plotting the dataset without epoxy samples - single exponential
+#Computing chi square
+chi_2 = (((unumpy.nominal_values(P_eq0) - expo(t0, *popt0))/unumpy.std_devs(P_eq0))**2).sum()
+print(f'chi2/ndof for 0 set= {chi_2:.1f}/{len(P_eq0)-3}')
+print(f'Asymptotic pressure: {expo(1000, *popt0)}')
+
+t = np.linspace(0, max(t0), 5000)
+plt.figure('Fit without epoxy samples')
+plt.errorbar(t0, unumpy.nominal_values(P_eq0), yerr=unumpy.std_devs(P_eq0), marker='.', linestyle='')
+plt.plot(t, expo(t, *popt0), color=plt.gca().lines[-1].get_color())
+plt.xlabel('time from filling [days]')
+plt.ylabel(r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
+plt.annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\frac{t}{\tau}})$' + '\n' + f'$p_0={popt0[0]:.2f} \pm {diag0[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt0[1]:.0f} \pm {diag0[1]:.0f}$ [mbar],' + '\n' + fr'$\tau={popt0[2]:.0f} \pm {diag0[2]:.0f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq0)-3}',
+    xy=(-0.2, 1192.3), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
+    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
+                    connectionstyle="angle"))
+plt.grid()
+
+
+plt.show()
+
+# Plotting GPD with stretched exponential
+
+#Computing chi square
+chi_2 = (((unumpy.nominal_values(P_eqGPD) - alpha_expo_scale(tGPD, *poptGPD))/unumpy.std_devs(P_eqGPD))**2).sum()
+print(f'chi2/ndof for 0 set= {chi_2:.1f}/{len(P_eqGPD)-4}')
+
+fig, ax = plt.subplots(2)
+t = np.linspace(0, max(tGPD), 5000)
+ax[0].errorbar(tGPD, unumpy.nominal_values(P_eqGPD), yerr=unumpy.std_devs(P_eqGPD), marker='.', linestyle='', color='tab:purple')
+ax[0].plot(t, alpha_expo_scale(t, *poptGPD), color='tab:purple')
+ax[0].set(xlabel='time from filling [days]', ylabel=r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
+
+ax[0].annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt1[0]:.2f} \pm {diag1[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt1[1]:.0f} \pm {diag1[1]:.0f}$ [mbar],' + '\n' + fr'$\alpha={popt1[2]:.3f} \pm {diag1[2]:.3f}$,'+ '\n' + fr'$\tau={popt1[3]:.1f} \pm {diag1[3]:.1f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq1)-4}',
+    xy=(10, 800), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec='tab:purple'),
+    arrowprops=dict(arrowstyle="->", ec='tab:purple',
+                    connectionstyle="angle"))
+
+ax[0].grid()
+
+res_norm = (unumpy.nominal_values(P_eqGPD) - alpha_expo_scale(tGPD, *poptGPD))/unumpy.std_devs(P_eqGPD)
+ax[1].errorbar(tGPD, res_norm, yerr=unumpy.std_devs(P_eqGPD), marker='.', linestyle='', color='tab:purple')
+ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+ax[1].grid()
+plt.show()
+
+
+
+# Fitting the first sample with the single exponential
+popt, pcov = curve_fit(expo, t1, unumpy.nominal_values(P_eq1), sigma=unumpy.std_devs(P_eq1), p0=[1200., 230., 7])
+diag = np.sqrt(np.diag(pcov))
+
+#Computing chi square
+chi_2 = (((unumpy.nominal_values(P_eq1) - expo(t1, *popt))/unumpy.std_devs(P_eq1))**2).sum()
+print(f'chi2/ndof for 0 set= {chi_2:.1f}/{len(P_eq1)-3}')
+
+fig, ax = plt.subplots(2)
+t = np.linspace(0, max(t1), 5000)
+ax[0].errorbar(t1, unumpy.nominal_values(P_eq1), yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
+ax[0].plot(t, expo(t, *popt), color='tab:orange')
+ax[0].set(xlabel='time from filling [days]', ylabel=r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
+
+ax[0].annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\frac{t}{\tau}})$' + '\n' + f'$p_0={popt[0]:.2f} \pm {diag[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt[1]:.0f} \pm {diag[1]:.0f}$ [mbar],' + '\n' + fr'$\tau={popt[2]:.0f} \pm {diag[2]:.0f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq1)-3}',
+    xy=(10, 1100), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec='tab:orange'),
+    arrowprops=dict(arrowstyle="->", ec='tab:orange',
+                    connectionstyle="angle"))
+
+ax[0].grid()
+
+res_norm = (unumpy.nominal_values(P_eq1) - expo(t1, *popt))/unumpy.std_devs(P_eq1)
+ax[1].errorbar(t1, res_norm, yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
+ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+ax[1].grid()
+
+
+plt.show()
+
+
+# Plotting first sample with stretched exponential
+
+#Computing chi square
+chi_2 = (((unumpy.nominal_values(P_eq1) - alpha_expo_scale(t1, *popt1))/unumpy.std_devs(P_eq1))**2).sum()
+print(f'chi2/ndof for 0 set= {chi_2:.1f}/{len(P_eq1)-4}')
+
+fig, ax = plt.subplots(2)
+t = np.linspace(0, max(t1), 5000)
+ax[0].errorbar(t1, unumpy.nominal_values(P_eq1), yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
+ax[0].plot(t, alpha_expo_scale(t, *popt1), color='tab:orange')
+ax[0].set(xlabel='time from filling [days]', ylabel=r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
+
+ax[0].annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt1[0]:.2f} \pm {diag1[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt1[1]:.0f} \pm {diag1[1]:.0f}$ [mbar],' + '\n' + fr'$\alpha={popt1[2]:.3f} \pm {diag1[2]:.3f}$,'+ '\n' + fr'$\tau={popt1[3]:.1f} \pm {diag1[3]:.1f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq1)-4}',
+    xy=(10, 1100), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec='tab:orange'),
+    arrowprops=dict(arrowstyle="->", ec='tab:orange',
+                    connectionstyle="angle"))
+
+ax[0].grid()
+
+res_norm = (unumpy.nominal_values(P_eq1) - alpha_expo_scale(t1, *popt1))/unumpy.std_devs(P_eq1)
+ax[1].errorbar(t1, res_norm, yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
+ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+ax[1].grid()
+plt.show()
+
+# Plotting second sample with stretched exponential
+
+#Computing chi square
+chi_2 = (((unumpy.nominal_values(P_eq2) - alpha_expo_scale(t2, *popt2))/unumpy.std_devs(P_eq2))**2).sum()
+print(f'chi2/ndof for 0 set= {chi_2:.1f}/{len(P_eq2)-4}')
+
+fig, ax = plt.subplots(2)
+t = np.linspace(0, max(t2), 5000)
+ax[0].errorbar(t2, unumpy.nominal_values(P_eq2), yerr=unumpy.std_devs(P_eq2), marker='.', linestyle='', color='tab:green')
+ax[0].plot(t, alpha_expo_scale(t, *popt2), color='tab:green')
+ax[0].set(xlabel='time from filling [days]', ylabel=r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
+
+ax[0].annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt2[0]:.2f} \pm {diag2[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt2[1]:.0f} \pm {diag2[1]:.0f}$ [mbar],' + '\n' + fr'$\alpha={popt2[2]:.3f} \pm {diag2[2]:.3f}$,'+ '\n' + fr'$\tau={popt2[3]:.1f} \pm {diag2[3]:.1f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq2)-4}',
+    xy=(4.5, 1140), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec='tab:green'),
+    arrowprops=dict(arrowstyle="->", ec='tab:green',
+                    connectionstyle="angle"))
+
+ax[0].grid()
+
+res_norm = (unumpy.nominal_values(P_eq2) - alpha_expo_scale(t2, *popt2))/unumpy.std_devs(P_eq2)
+ax[1].errorbar(t2, res_norm, yerr=unumpy.std_devs(P_eq2), marker='.', linestyle='', color='tab:green')
+ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+ax[1].grid()
+plt.show()
+
+
+# Plotting third sample with stretched exponential
+
+#Computing chi square
+chi_2 = (((unumpy.nominal_values(P_eq3) - alpha_expo_scale(t3, *popt3))/unumpy.std_devs(P_eq3))**2).sum()
+print(f'chi2/ndof for 0 set= {chi_2:.1f}/{len(P_eq3)-4}')
+
+t = np.linspace(0, max(t3), 5000)
+fig, ax = plt.subplots(2)
+ax[0].errorbar(t3, unumpy.nominal_values(P_eq3), yerr=unumpy.std_devs(P_eq3), marker='.', linestyle='', color='tab:red')
+ax[0].plot(t, alpha_expo_scale(t, *popt3), color='tab:red')
+ax[0].set(xlabel='time from filling [days]', ylabel=r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
+
+ax[0].annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt3[0]:.2f} \pm {diag3[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt3[1]:.0f} \pm {diag3[1]:.0f}$ [mbar],' + '\n' + fr'$\alpha={popt3[2]:.3f} \pm {diag3[2]:.3f}$,'+ '\n' + fr'$\tau={popt3[3]:.1f} \pm {diag3[3]:.1f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq3)-4}',
+    xy=(17, 1130), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec='tab:red'),
+    arrowprops=dict(arrowstyle="->", ec='tab:red',
+                    connectionstyle="angle"))
+
+ax[0].grid()
+
+res_norm = (unumpy.nominal_values(P_eq3) - alpha_expo_scale(t3, *popt3))/unumpy.std_devs(P_eq3)
+ax[1].errorbar(t3, res_norm, yerr=unumpy.std_devs(P_eq3), marker='.', linestyle='', color='tab:red')
+ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+ax[1].grid()
+plt.show()
+
 
 # Checking pts
 fig, ax = plt.subplots()
 t = np.linspace(0, max(t0), 5000)
-ax.errorbar(t0, P_eq0, marker='.', linestyle='')
+ax.errorbar(t0, unumpy.nominal_values(P_eq0), yerr=unumpy.std_devs(P_eq0), marker='.', linestyle='')
 ax.plot(t, expo(t, *popt0), color=plt.gca().lines[-1].get_color())
 ax.annotate('Empty AC',
-            xy=(t1[30], P_eq1[30]), xycoords='data',
+            xy=(10, 1190), xycoords='data',
             xytext=(45, 9), textcoords='offset points',
             size=18, va="center",
             bbox=dict(boxstyle="round", fc=plt.gca().lines[-1].get_color(), ec="none", alpha=0.4))
 ax.annotate(
     fr'$P_0={popt0[0]:.2f} \pm {diag0[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt0[1]:.0f} \pm {diag0[1]:.0f}$ [mbar],'+ '\n' + fr'$\alpha=1$ (standard exp),'+ '\n' + fr'$\tau={popt0[2]:.0f} \pm {diag0[2]:.0f}$ [days]',
-    xy=(t0[-1], P_eq0[-1]), xycoords='data', size=18,
+    xy=(t[-1], 0), xycoords='data', size=18,
     xytext=(40, -40), textcoords='offset points',
     bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
     arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
@@ -71,47 +270,47 @@ ax.annotate(
 
 
 t = np.linspace(0, max(t1), 5000)
-ax.errorbar(t1, P_eq1, marker='.', linestyle='')
+ax.errorbar(t1, unumpy.nominal_values(P_eq1), yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='')
 ax.plot(t, alpha_expo_scale(t, *popt1), color=plt.gca().lines[-1].get_color())
 ax.annotate(fr'$V_1$ = {V1} mm$^3$' +'\n' + fr'$\frac{{S_1}}{{V_1}}$ = {S1/V1:.2f} $\frac{{1}}{{\text{{mm}}}}$',
-            xy=(t1[729], P_eq1[729]), xycoords='data',
+            xy=(t[0], 0), xycoords='data',
             xytext=(-160, -20), textcoords='offset points',
             size=18, va="center",
             bbox=dict(boxstyle="round", fc=plt.gca().lines[-1].get_color(), ec="none", alpha=0.4))
 ax.annotate(
     fr'$P_0={popt1[0]:.2f} \pm {diag1[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt1[1]:.0f} \pm {diag1[1]:.0f}$ [mbar],'+ '\n' + fr'$\alpha={popt1[2]:.4f} \pm {diag1[2]:.4f}$,'+ '\n' + fr'$\tau={popt1[3]:.0f} \pm {diag1[3]:.0f}$ [days]',
-    xy=(t1[-1], P_eq1[-1]), xycoords='data', size=18,
+    xy=(10, 1100), xycoords='data', size=18,
     xytext=(-20, -10), textcoords='offset points',
     bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
     arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
                     connectionstyle="angle,angleA=0,angleB=-90"))
 t = np.linspace(0, max(t2), 5000)
-ax.errorbar(t2, P_eq2, marker='.', linestyle='')
+ax.errorbar(t2, unumpy.nominal_values(P_eq2), yerr=unumpy.std_devs(P_eq2), marker='.', linestyle='')
 ax.plot(t, alpha_expo_scale(t, *popt2), color=plt.gca().lines[-1].get_color())
 ax.annotate(
     fr'$P_0={popt2[0]:.2f} \pm {diag2[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt2[1]:.1f} \pm {diag2[1]:.1f}$ [mbar],'+ '\n' + fr'$\alpha={popt2[2]:.3f} \pm {diag2[2]:.3f}$,'+ '\n' + fr'$\tau={popt2[3]:.2f} \pm {diag2[3]:.2f}$ [days]',
-    xy=(t2[-1], P_eq2[-1]), xycoords='data', size=18,
+    xy=(t[-1], 0), xycoords='data', size=18,
     xytext=(150, -95), textcoords='offset points',
     bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
     arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
                     connectionstyle="angle,angleA=0,angleB=90"))
 ax.annotate(fr'$V_2$ = {V2} mm$^3$' +'\n' + fr'$\frac{{S_2}}{{V_2}}$ = {S2/V2:.2f} $\frac{{1}}{{\text{{mm}}}}$',
-            xy=(t2[-1], P_eq2[-1]), xycoords='data',
+            xy=(t[-1], 0), xycoords='data',
             xytext=(10, 20), textcoords='offset points',
             size=18, va="center",
             bbox=dict(boxstyle="round", fc=plt.gca().lines[-1].get_color(), ec="none", alpha=0.4))
 t = np.linspace(0, max(t3), 5000)
-ax.errorbar(t3, P_eq3, marker='.', linestyle='')
+ax.errorbar(t3, unumpy.nominal_values(P_eq3), yerr=unumpy.std_devs(P_eq3), marker='.', linestyle='')
 ax.plot(t, alpha_expo_scale(t, *popt3), color=plt.gca().lines[-1].get_color())
 ax.annotate(
     fr'$P_0={popt3[0]:.2f} \pm {diag3[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt3[1]:.0f} \pm {diag3[1]:.0f}$ [mbar],'+ '\n' + fr'$\alpha={popt3[2]:.3f} \pm {diag3[2]:.3f}$,'+ '\n' + fr'$\tau={popt3[3]:.0f} \pm {diag3[3]:.0f}$ [days]',
-    xy=(t3[-1], P_eq3[-1]), xycoords='data', size=18,
+    xy=(t[-1], 0), xycoords='data', size=18,
     xytext=(-180, 60), textcoords='offset points',
     bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
     arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
                     connectionstyle="angle,angleA=0,angleB=90"))
 ax.annotate(fr'$V_3$ = {V3} mm$^3$' +'\n' + fr'$\frac{{S_3}}{{V_3}}$ = {S3/V3:.2f} $\frac{{1}}{{\text{{mm}}}}$',
-            xy=(t3[725], P_eq3[725]), xycoords='data',
+            xy=(t[0], 0), xycoords='data',
             xytext=(45, 20), textcoords='offset points',
             size=18, va="center",
             bbox=dict(boxstyle="round", fc=plt.gca().lines[-1].get_color(), ec="none", alpha=0.4))
@@ -219,6 +418,6 @@ axs[2].set_xticks(np.array([0.02, 0.04, 0.06]), minor=False)
 
 axs[2].grid(True, which='both',axis='both')
 
-plt.savefig('/Users/chiara/Desktop/params.pdf')
+#plt.savefig('/Users/chiara/Desktop/params.pdf')
 
 plt.show()

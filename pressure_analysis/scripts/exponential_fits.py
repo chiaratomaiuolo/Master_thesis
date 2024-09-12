@@ -138,15 +138,22 @@ def parameters_plots(x, popts):
 
 
 if __name__ == "__main__":
+    #Obtaining argument parser objects
+    args = EXPONENTIAL_FITS_ARGPARSER.parse_args()
     #Datafiles are briefly descripted above their pathfile line. 
     #Select the interested one and comment the other paths_to_data, start_times, stop_times
-
+    #Datafiles from 12/02/2024 to 22/02/2024 - AC DME filled without epoxy samples
     #paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
 
+    #start_times = [['2024-02-12 12:00:35.000']]
+    #stop_times = [['2024-02-19 9:00:00.000']]
+
+    
+
     #Datafiles from 26/02/2024 - AC DME filled, epoxy samples inside, T_Julabo = 22°C
-    #paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
+    paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples.txt"]
     #paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples_40degrees.txt"]
-    paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from2602.txt']
+    #paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from2602.txt']
     #paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from0804.txt']
     '''
     start_times = [['2024-02-26 15:51:00.000','2024-02-27 8:00:00.000', 
@@ -192,14 +199,15 @@ if __name__ == "__main__":
     T_eff = T5+0.16*(T6-T5)/1.16 #°C
 
     #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
-    T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
-    #T_eff_filtered = T_eff
+    #T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
+    T_eff_filtered = T_eff
+    print(P4)
 
     #Computing the equivalent pressure
     P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
     dP_eq = np.sqrt((77/(P4*100))**2 + (0.05/T_eff_filtered)**2) #relative
     dP_eq = P_eq*dP_eq #absolute
-    print(dP_eq)
+    print(P_eq)
     print(len(dP_eq), len(P_eq))
 
 
@@ -232,8 +240,6 @@ if __name__ == "__main__":
     #print(dP_eq0804)
     #print(len(dP_eq0804), len(P_eq0804))
 
-    #Obtaining argument parser objects
-    args = EXPONENTIAL_FITS_ARGPARSER.parse_args()
     model = funcs[args.func]
 
     #Performing fit for first dataset
