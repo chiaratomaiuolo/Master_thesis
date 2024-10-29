@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from scipy.signal import butter, sosfilt
 
-"""Signal filtering facilities
+"""Signal filtering functions
 """
 
 def butterworth_filtering(signal: np.array, N, Wn, btype='low', analog=False, fs=None) -> np.array:
