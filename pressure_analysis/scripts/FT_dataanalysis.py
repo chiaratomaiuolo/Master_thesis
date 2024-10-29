@@ -4,8 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 from scipy.fft import fft, fftfreq
-from scipy.optimize import curve_fit
-from scipy.signal import butter, convolve, medfilt, sosfilt, sosfiltfilt, firwin
+from scipy.signal import butter, convolve, sosfilt, sosfiltfilt, firwin
 
 from pressure_analysis.labviewdatareading import LabViewdata_reading
 from pressure_analysis.models import alpha_expo_scale
