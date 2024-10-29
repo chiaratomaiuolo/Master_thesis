@@ -143,15 +143,17 @@ def plot_with_residuals(x: np.array, y_data: np.array, model, popt: np.array, ye
     - fig, axs of the figure (in order to customize the figure externally)
     """
     fig, axs = plt.subplots(2)
-    fig.suptitle(f'Fit using {model.__name__}')
+    #fig.suptitle(f'Fit using {model.__name__}')
     if yerr is None:
-        axs[0].errorbar(x, y_data, marker='.', linestyle='', label='Data')
+        axs[0].errorbar(x, y_data, marker='.', linestyle='', label='Data', color='tab:orange')
+        y_fitted = model(x, *popt)
+        axs[0].plot(x, y_fitted, label=f'Fit with {model.__name__}')
+        res_normalized = (y_data - y_fitted)
+        axs[1].plot(x, res_normalized, color='tab:orange')
     else:
-        axs[0].errorbar(x, y_data, yerr=yerr, marker='.', linestyle='', label='Data')
-    y_fitted = model(x, *popt)
-    axs[0].plot(x, y_fitted, label=f'Fit with {model.__name__}')
-    axs[0].legend()
-    res_normalized = (y_data - y_fitted)/y_data
-    axs[1].plot(x, res_normalized)
-    axs[1].plot()
+        axs[0].errorbar(x, y_data, yerr=yerr, marker='.', linestyle='', label='Data', color='tab:orange')
+        y_fitted = model(x, *popt)
+        axs[0].plot(x, y_fitted, label=f'Fit with {model.__name__}')
+        res_normalized = (y_data - y_fitted)
+        axs[1].plot(x, res_normalized, color='tab:orange')
     return fig, axs

@@ -9,7 +9,8 @@ from pressure_analysis.models import expo, alpha_expo_scale, double_expo, empty_
 from pressure_analysis.labviewdatareading import plot_with_residuals
 
 
-""" This script is done for preparing a plot for the PM 2024 poster
+""" This script is done for preparing a plot for the PM 2024 poster and for my
+    Master Thesis
 """
 
 # Loading data
@@ -137,26 +138,92 @@ diag = np.sqrt(np.diag(pcov))
 #Computing chi square
 chi_2 = (((unumpy.nominal_values(P_eq1) - expo(t1, *popt))/unumpy.std_devs(P_eq1))**2).sum()
 print(f'chi2/ndof for 0 set= {chi_2:.1f}/{len(P_eq1)-3}')
-
+'''
+plt.figure()
+t = np.linspace(0, max(t1), 5000)
+plt.errorbar(t1, unumpy.nominal_values(P_eq1), yerr=unumpy.std_devs(P_eq1), marker='o', linestyle='', color='tab:blue', label='Data sampled')
+plt.plot(t, alpha_expo_scale(t, *popt1), color='tab:blue', label='Stretched exponential fit')
+plt.plot(t, expo(t, *popt), color='tab:red', label='Single exponential fit')
+plt.tick_params(axis='x', labelsize=20)
+plt.tick_params(axis='y', labelsize=20)
+plt.xlabel('time from filling [days]', fontsize='20')
+plt.ylabel(r'$\hat{p}_{\text{eq,24h}}$ [mbar]', fontsize='20')
+plt.grid()
+plt.legend(fontsize='20')
+'''
+# Plt with res
 fig, ax = plt.subplots(2)
 t = np.linspace(0, max(t1), 5000)
-ax[0].errorbar(t1, unumpy.nominal_values(P_eq1), yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
-ax[0].plot(t, expo(t, *popt), color='tab:orange')
-ax[0].set(xlabel='time from filling [days]', ylabel=r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
+ax[0].errorbar(t1, unumpy.nominal_values(P_eq1), yerr=unumpy.std_devs(P_eq1), marker='o', linestyle='', color='tab:blue', label='Data sampled')
+ax[0].plot(t, alpha_expo_scale(t, *popt1), color='tab:blue', label='Stretched exponential fit')
+ax[0].plot(t, expo(t, *popt), color='tab:red', label='Single exponential fit')
+ax[0].tick_params(axis='x', labelsize=20)
+ax[0].tick_params(axis='y', labelsize=20)
+ax[0].set_xlabel('time from filling [days]', fontsize=20)
+ax[0].set_ylabel(r'$\hat{p}_{\text{eq,24h}}$ [mbar]', fontsize=20)
+
+plt.grid()
+ax[0].legend(fontsize='20')
+
+ax[0].grid()
+
+res = (unumpy.nominal_values(P_eq1) - expo(t1, *popt))
+ax[1].errorbar(t1, res, yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
+ax[1].set_xlabel('time from filling [days]', fontsize=20)
+ax[1].set_ylabel('Residuals [mbar]', fontsize=20)
+#ax[1].set(xlabel='time from filling [days]', ylabel='Residuals [mbar]')
+ax[1].grid()
+
+'''
+plt.annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\frac{t}{\tau}})$' + '\n' + f'$p_0={popt[0]:.2f} \pm {diag[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt[1]:.0f} \pm {diag[1]:.0f}$ [mbar],' + '\n' + fr'$\tau={popt[2]:.0f} \pm {diag[2]:.0f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq1)-3}',
+    xy=(8, 1100), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec='tab:orange'),
+    arrowprops=dict(arrowstyle="->", ec='tab:orange',
+                    connectionstyle="angle"), fontsize='20')
+plt.grid()
+'''
+# Res
+res = (unumpy.nominal_values(P_eq1) - expo(t1, *popt))
+res2 = (unumpy.nominal_values(P_eq1) - alpha_expo_scale(t1, *popt1))
+ax[1].errorbar(t1, res, yerr=unumpy.std_devs(P_eq1), marker='o', linestyle='', color='tab:red', label='Single exponential')
+ax[1].errorbar(t1, res2, yerr=unumpy.std_devs(P_eq1), marker='^', linestyle='', color='tab:blue', label='Stretched exponential')
+ax[1].set(xlabel='time from filling [days]', ylabel='Residuals [mbar]')
+
+ax[1].tick_params(axis='x', labelsize=20)
+ax[1].tick_params(axis='y', labelsize=20)
+ax[1].legend(fontsize='20')
+ax[1].grid()
+
+plt.show()
+
+# Plt with res
+fig, ax = plt.subplots(2)
+t = np.linspace(0, max(t1), 5000)
+ax[0].errorbar(t1, unumpy.nominal_values(P_eq1), yerr=unumpy.std_devs(P_eq1), marker='o', linestyle='', color='tab:blue')
+ax[0].plot(t, expo(t, *popt), color='tab:blue')
+ax[0].set_xlabel('time from filling [days]', fontsize=15)
+ax[0].set_ylabel(r'$\hat{p}_{\text{eq,24h}}$ [mbar]', fontsize=15)
+ax[0].tick_params(axis='x', labelsize=15)
+ax[0].tick_params(axis='y', labelsize=15)
 
 ax[0].annotate(
     r'$p(t) = p_0 - \Delta_p(1- \exp{-\frac{t}{\tau}})$' + '\n' + f'$p_0={popt[0]:.2f} \pm {diag[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt[1]:.0f} \pm {diag[1]:.0f}$ [mbar],' + '\n' + fr'$\tau={popt[2]:.0f} \pm {diag[2]:.0f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq1)-3}',
     xy=(10, 1100), xycoords='data',
     xytext=(0, 0), textcoords='offset points',
-    bbox=dict(boxstyle="round", fc="1", ec='tab:orange'),
-    arrowprops=dict(arrowstyle="->", ec='tab:orange',
+    bbox=dict(boxstyle="round", fc="1", ec='tab:blue'),
+    arrowprops=dict(arrowstyle="->", ec='tab:blue',
                     connectionstyle="angle"))
 
 ax[0].grid()
 
-res_norm = (unumpy.nominal_values(P_eq1) - expo(t1, *popt))/unumpy.std_devs(P_eq1)
-ax[1].errorbar(t1, res_norm, yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
-ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+res = (unumpy.nominal_values(P_eq1) - expo(t1, *popt))
+ax[1].errorbar(t1, res, yerr=unumpy.std_devs(P_eq1), marker='o', linestyle='', color='tab:blue')
+ax[1].set_xlabel('time from filling [days]', fontsize=15)
+ax[1].set_ylabel('Residuals [mbar]', fontsize=15)
+ax[1].tick_params(axis='x', labelsize=15)
+ax[1].tick_params(axis='y', labelsize=15)
 ax[1].grid()
 
 
@@ -185,9 +252,9 @@ ax[0].annotate(
 
 ax[0].grid()
 
-res_norm = (unumpy.nominal_values(P_eq1) - alpha_expo_scale(t1, *popt1))/unumpy.std_devs(P_eq1)
-ax[1].errorbar(t1, res_norm, yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
-ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+res = (unumpy.nominal_values(P_eq1) - alpha_expo_scale(t1, *popt1))
+ax[1].errorbar(t1, res, yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='', color='tab:orange')
+ax[1].set(xlabel='time from filling [days]', ylabel='Residuals [mbar]')
 ax[1].grid()
 plt.show()
 
@@ -204,7 +271,7 @@ ax[0].plot(t, alpha_expo_scale(t, *popt2), color='tab:green')
 ax[0].set(xlabel='time from filling [days]', ylabel=r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
 
 ax[0].annotate(
-    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt2[0]:.2f} \pm {diag2[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt2[1]:.0f} \pm {diag2[1]:.0f}$ [mbar],' + '\n' + fr'$\alpha={popt2[2]:.3f} \pm {diag2[2]:.3f}$,'+ '\n' + fr'$\tau={popt2[3]:.1f} \pm {diag2[3]:.1f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq2)-4}',
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt2[0]:.2f} \pm {diag2[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt2[1]:.0f} \pm {diag2[1]:.0f}$ [mbar],' + '\n' + fr'$\alpha={popt2[2]:.3f} \pm {diag2[2]:.3f}$,'+ '\n' + fr'$\tau={popt2[3]:.2f} \pm {diag2[3]:.2f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq2)-4}',
     xy=(4.5, 1140), xycoords='data',
     xytext=(0, 0), textcoords='offset points',
     bbox=dict(boxstyle="round", fc="1", ec='tab:green'),
@@ -213,9 +280,9 @@ ax[0].annotate(
 
 ax[0].grid()
 
-res_norm = (unumpy.nominal_values(P_eq2) - alpha_expo_scale(t2, *popt2))/unumpy.std_devs(P_eq2)
-ax[1].errorbar(t2, res_norm, yerr=unumpy.std_devs(P_eq2), marker='.', linestyle='', color='tab:green')
-ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+res = (unumpy.nominal_values(P_eq2) - alpha_expo_scale(t2, *popt2))
+ax[1].errorbar(t2, res, yerr=unumpy.std_devs(P_eq2), marker='.', linestyle='', color='tab:green')
+ax[1].set(xlabel='time from filling [days]', ylabel=r'Residuals [mbar]')
 ax[1].grid()
 plt.show()
 
@@ -233,8 +300,8 @@ ax[0].plot(t, alpha_expo_scale(t, *popt3), color='tab:red')
 ax[0].set(xlabel='time from filling [days]', ylabel=r'$\hat{p}_{\text{eq,24h}}$ [mbar]')
 
 ax[0].annotate(
-    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt3[0]:.2f} \pm {diag3[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt3[1]:.0f} \pm {diag3[1]:.0f}$ [mbar],' + '\n' + fr'$\alpha={popt3[2]:.3f} \pm {diag3[2]:.3f}$,'+ '\n' + fr'$\tau={popt3[3]:.1f} \pm {diag3[3]:.1f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq3)-4}',
-    xy=(17, 1130), xycoords='data',
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt3[0]:.2f} \pm {diag3[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt3[1]:.0f} \pm {diag3[1]:.0f}$ [mbar],' + '\n' + fr'$\alpha={popt3[2]:.3f} \pm {diag3[2]:.3f}$,'+ '\n' + fr'$\tau={popt3[3]:.0f} \pm {diag3[3]:.0f}$ [days]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq3)-4}',
+    xy=(30, 1130), xycoords='data',
     xytext=(0, 0), textcoords='offset points',
     bbox=dict(boxstyle="round", fc="1", ec='tab:red'),
     arrowprops=dict(arrowstyle="->", ec='tab:red',
@@ -242,82 +309,83 @@ ax[0].annotate(
 
 ax[0].grid()
 
-res_norm = (unumpy.nominal_values(P_eq3) - alpha_expo_scale(t3, *popt3))/unumpy.std_devs(P_eq3)
-ax[1].errorbar(t3, res_norm, yerr=unumpy.std_devs(P_eq3), marker='.', linestyle='', color='tab:red')
-ax[1].set(xlabel='time from filling [days]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+res = (unumpy.nominal_values(P_eq3) - alpha_expo_scale(t3, *popt3))
+ax[1].errorbar(t3, res, yerr=unumpy.std_devs(P_eq3), marker='.', linestyle='', color='tab:red')
+ax[1].set(xlabel='time from filling [days]', ylabel=r'Residuals [mbar]')
 ax[1].grid()
 plt.show()
 
 
-# Checking pts
+# Summary plot
 fig, ax = plt.subplots()
 t = np.linspace(0, max(t0), 5000)
 ax.errorbar(t0, unumpy.nominal_values(P_eq0), yerr=unumpy.std_devs(P_eq0), marker='.', linestyle='')
 ax.plot(t, expo(t, *popt0), color=plt.gca().lines[-1].get_color())
 ax.annotate('Empty AC',
-            xy=(10, 1190), xycoords='data',
-            xytext=(45, 9), textcoords='offset points',
-            size=18, va="center",
+            xy=(7, 1200), xycoords='data',
+            textcoords='data', va="center",
             bbox=dict(boxstyle="round", fc=plt.gca().lines[-1].get_color(), ec="none", alpha=0.4))
+
 ax.annotate(
-    fr'$P_0={popt0[0]:.2f} \pm {diag0[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt0[1]:.0f} \pm {diag0[1]:.0f}$ [mbar],'+ '\n' + fr'$\alpha=1$ (standard exp),'+ '\n' + fr'$\tau={popt0[2]:.0f} \pm {diag0[2]:.0f}$ [days]',
-    xy=(t[-1], 0), xycoords='data', size=18,
-    xytext=(40, -40), textcoords='offset points',
+    fr'$p_0={popt0[0]:.2f} \pm {diag0[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt0[1]:.0f} \pm {diag0[1]:.0f}$ [mbar],'+ '\n' + fr'$\alpha=1$ (standard exp),'+ '\n' + fr'$\tau={popt0[2]:.0f} \pm {diag0[2]:.0f}$ [days]',
+    xy=(t[-1], expo(t[-1],*popt0)), xycoords='data',
+    xytext=(15, 1170), textcoords='data',
     bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
     arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
-                    connectionstyle="angle"))
-
+                    connectionstyle="angle,angleA=-90,angleB=0"))
 
 
 t = np.linspace(0, max(t1), 5000)
 ax.errorbar(t1, unumpy.nominal_values(P_eq1), yerr=unumpy.std_devs(P_eq1), marker='.', linestyle='')
 ax.plot(t, alpha_expo_scale(t, *popt1), color=plt.gca().lines[-1].get_color())
-ax.annotate(fr'$V_1$ = {V1} mm$^3$' +'\n' + fr'$\frac{{S_1}}{{V_1}}$ = {S1/V1:.2f} $\frac{{1}}{{\text{{mm}}}}$',
-            xy=(t[0], 0), xycoords='data',
-            xytext=(-160, -20), textcoords='offset points',
-            size=18, va="center",
+ax.annotate(fr'$V_1$ = {V1} mm$^3$' + '\n' + fr'$S_1$ = {S1} mm$^2$' +'\n' + fr'$\frac{{S_1}}{{V_1}}$ = {S1/V1:.2f} $\frac{{1}}{{\text{{mm}}}}$',
+            xy=(17, 995), xycoords='data',
+            textcoords='data', va="center",
             bbox=dict(boxstyle="round", fc=plt.gca().lines[-1].get_color(), ec="none", alpha=0.4))
+
 ax.annotate(
     fr'$P_0={popt1[0]:.2f} \pm {diag1[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt1[1]:.0f} \pm {diag1[1]:.0f}$ [mbar],'+ '\n' + fr'$\alpha={popt1[2]:.4f} \pm {diag1[2]:.4f}$,'+ '\n' + fr'$\tau={popt1[3]:.0f} \pm {diag1[3]:.0f}$ [days]',
-    xy=(10, 1100), xycoords='data', size=18,
-    xytext=(-20, -10), textcoords='offset points',
-    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
-    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
-                    connectionstyle="angle,angleA=0,angleB=-90"))
-t = np.linspace(0, max(t2), 5000)
-ax.errorbar(t2, unumpy.nominal_values(P_eq2), yerr=unumpy.std_devs(P_eq2), marker='.', linestyle='')
-ax.plot(t, alpha_expo_scale(t, *popt2), color=plt.gca().lines[-1].get_color())
-ax.annotate(
-    fr'$P_0={popt2[0]:.2f} \pm {diag2[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt2[1]:.1f} \pm {diag2[1]:.1f}$ [mbar],'+ '\n' + fr'$\alpha={popt2[2]:.3f} \pm {diag2[2]:.3f}$,'+ '\n' + fr'$\tau={popt2[3]:.2f} \pm {diag2[3]:.2f}$ [days]',
-    xy=(t[-1], 0), xycoords='data', size=18,
-    xytext=(150, -95), textcoords='offset points',
+    xy=(10.1, 1022.8), xycoords='data',
+    xytext=(27.5, 1000), textcoords='data',
     bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
     arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
                     connectionstyle="angle,angleA=0,angleB=90"))
-ax.annotate(fr'$V_2$ = {V2} mm$^3$' +'\n' + fr'$\frac{{S_2}}{{V_2}}$ = {S2/V2:.2f} $\frac{{1}}{{\text{{mm}}}}$',
-            xy=(t[-1], 0), xycoords='data',
-            xytext=(10, 20), textcoords='offset points',
-            size=18, va="center",
+
+t = np.linspace(0, max(t2), 5000)
+ax.errorbar(t2, unumpy.nominal_values(P_eq2), yerr=unumpy.std_devs(P_eq2), marker='.', linestyle='')
+ax.plot(t, alpha_expo_scale(t, *popt2), color=plt.gca().lines[-1].get_color())
+
+ax.annotate(
+    fr'$P_0={popt2[0]:.2f} \pm {diag2[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt2[1]:.1f} \pm {diag2[1]:.1f}$ [mbar],'+ '\n' + fr'$\alpha={popt2[2]:.3f} \pm {diag2[2]:.3f}$,'+ '\n' + fr'$\tau={popt2[3]:.2f} \pm {diag2[3]:.2f}$ [days]',
+    xy=(t[-1], alpha_expo_scale(t[-1], *popt2)), xycoords='data',
+    xytext=(15.5, 1110), textcoords='data',
+    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
+    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
+                    connectionstyle="angle,angleA=0,angleB=90"))
+
+ax.annotate(fr'$V_2$ = {V2} mm$^3$' + '\n' + fr'$S_2$ = {S2} mm$^2$' +'\n' + fr'$\frac{{S_2}}{{V_2}}$ = {S2/V2:.2f} $\frac{{1}}{{\text{{mm}}}}$',
+            xy=(8, 1070), xycoords='data',
+            textcoords='data', va="center",
             bbox=dict(boxstyle="round", fc=plt.gca().lines[-1].get_color(), ec="none", alpha=0.4))
 t = np.linspace(0, max(t3), 5000)
 ax.errorbar(t3, unumpy.nominal_values(P_eq3), yerr=unumpy.std_devs(P_eq3), marker='.', linestyle='')
 ax.plot(t, alpha_expo_scale(t, *popt3), color=plt.gca().lines[-1].get_color())
+
 ax.annotate(
     fr'$P_0={popt3[0]:.2f} \pm {diag3[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_P={popt3[1]:.0f} \pm {diag3[1]:.0f}$ [mbar],'+ '\n' + fr'$\alpha={popt3[2]:.3f} \pm {diag3[2]:.3f}$,'+ '\n' + fr'$\tau={popt3[3]:.0f} \pm {diag3[3]:.0f}$ [days]',
-    xy=(t[-1], 0), xycoords='data', size=18,
-    xytext=(-180, 60), textcoords='offset points',
+    xy=(t[-1], alpha_expo_scale(t[-1], *popt3)), xycoords='data',
+    xytext=(35,1110), textcoords='data',
     bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
     arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
                     connectionstyle="angle,angleA=0,angleB=90"))
-ax.annotate(fr'$V_3$ = {V3} mm$^3$' +'\n' + fr'$\frac{{S_3}}{{V_3}}$ = {S3/V3:.2f} $\frac{{1}}{{\text{{mm}}}}$',
-            xy=(t[0], 0), xycoords='data',
-            xytext=(45, 20), textcoords='offset points',
-            size=18, va="center",
+
+ax.annotate(fr'$V_3$ = {V3} mm$^3$' + '\n' + fr'$S_3$ = {S3} mm$^2$' +'\n' + fr'$\frac{{S_3}}{{V_3}}$ = {S3/V3:.2f} $\frac{{1}}{{\text{{mm}}}}$',
+            xy=(30, 1080), xycoords='data',
+            textcoords='data', va="center",
             bbox=dict(boxstyle="round", fc=plt.gca().lines[-1].get_color(), ec="none", alpha=0.4))
-ax.set_xlabel('time from filling [days]', fontsize = 22)
-ax.set_ylabel(r'$P_{eq}$ [mbar]', fontsize = 22)
-ax.tick_params(axis='x', labelsize=22)
-ax.tick_params(axis='y', labelsize=22)
+ax.set_xlabel('time from filling [days]', fontsize='20')
+ax.set_ylabel(r'$\hat{p}_{\text{eq,24h}}$ [mbar]', fontsize='20')
+
 ax.grid()
 #plt.errorbar(tGPD[:-1], P_eqGPD[:-1], marker='.', linestyle='')
 
@@ -341,24 +409,25 @@ def power_law(x, C, l):
 def sigmoid(x, x0, k):
     return 100 / (1 + np.exp(-k*(x-x0)))
 
+#PARAMETERS SUMMARY PLOTS
 
 z = np.linspace(min(S/V), max(S/V), 100)
 # label=r'$\alpha(\frac{S}{V}) = m\cdot \frac{S}{V} + q$'
 fig, axs = plt.subplots(nrows=1, ncols=3)
-plt.subplots_adjust(left=0.3, bottom=0.07, right=None, top=0.99, wspace=None, hspace=0.3)
-popt, pcov = curve_fit(line, S/V, [popt1[2], popt2[2], popt3[2]])
+#plt.subplots_adjust(left=0.3, bottom=0.07, right=None, top=0.99, wspace=None, hspace=0.3)
+popt, pcov = curve_fit(line, S/V, [popt1[2], popt2[2], popt3[2]]) #delta p
 diag = np.sqrt(np.diag(pcov))
 print(popt, np.sqrt(np.diag(pcov)))
-axs[0].errorbar(S/V, [popt1[2], popt2[2], popt3[2]], yerr=[diag1[2], diag2[2], diag3[2]], marker='^', linestyle='', color='tab:red')
+axs[0].errorbar(S/V, [popt1[2], popt2[2], popt3[2]], yerr=[diag1[2], diag2[2], diag3[2]], marker='^', linestyle='', color='tab:brown')
 #axs[0].errorbar(1/2.122, 0.478, marker='*', linestyle='', color='tab:green', label='GPD 38')
-axs[0].plot(z, line(z, *popt), color='tab:orange', label=fr'$m = {popt[0]:.2f} \pm {diag[0]:.2f}$ [mm]' + '\n' + fr'$q = {popt[1]:.2f} \pm {diag[1]:.2f}$')
-axs[0].text(0.5, 0.6, fr'$\alpha(\frac{{S}}{{V}}) = m\cdot \frac{{S}}{{V}} + q$', fontsize='20')
+axs[0].plot(z, line(z, *popt), color='tab:purple', label=fr'$m = {popt[0]:.2f} \pm {diag[0]:.2f}$ [mm]' + '\n' + fr'$q = {popt[1]:.2f} \pm {diag[1]:.2f}$')
+axs[0].text(0.5, 0.73, fr'$\alpha(\frac{{S}}{{V}}) = m\cdot \frac{{S}}{{V}} + q$', bbox=dict(boxstyle="round", fc='none', ec="black"))
 axs[0].grid()
-axs[0].set_xlabel(r'$S_{sample}/V_{sample}$ [1/mm]', fontsize = 20)
-axs[0].set_ylabel(r'$\alpha$', fontsize = 20)
+axs[0].set_xlabel(r'$S_{sample}/V_{sample}$ [1/mm]', fontsize='20')
+axs[0].set_ylabel(r'$\alpha$', fontsize='20')
 axs[0].tick_params(axis='x', labelsize=20)
 axs[0].tick_params(axis='y', labelsize=20)
-axs[0].legend(fontsize='15', loc='upper left')
+axs[0].legend(loc='lower right')
 '''
 axs[0].annotate(
     fr'$\alpha(\frac{{S}}{{V}}) = m\cdot \frac{{S}}{{V}} + q$' + '\n' + fr'$m = {popt[0]:.2f} \pm {diag[0]:.2f}$ [mm]' + '\n' + fr'$q = {popt[1]:.2f} \pm {diag[1]:.2f}$',
@@ -372,18 +441,18 @@ axs[0].annotate(
 popt, pcov = curve_fit(power_law, S/V, [popt1[3], popt2[3], popt3[3]])
 diag = np.sqrt(np.diag(pcov))
 print(popt, np.sqrt(np.diag(pcov)))
-axs[1].errorbar(S/V, [popt1[3], popt2[3], popt3[3]], yerr=[diag1[3], diag2[3], diag3[3]], marker='^', linestyle='', color='tab:red')
+axs[1].errorbar(S/V, [popt1[3], popt2[3], popt3[3]], yerr=[diag1[3], diag2[3], diag3[3]], marker='^', linestyle='', color='tab:brown')
 #axs[1].errorbar(1/2.122, 629, yerr=90, marker='*', linestyle='', color='tab:green', label='GPD 38')
-axs[1].plot(z, power_law(z, *popt), color='tab:orange', label= fr'$C = {popt[0]:.0f} \pm {diag[0]:.0f}$ [mm$^2$]' + '\n' + fr'${{\Gamma}} = {popt[1]:.2f} \pm {diag[1]:.2f}$')
-axs[1].text(0.8, 1000, fr'$\tau(\frac{{S}}{{V}}) = C\cdot \left(\frac{{S}}{{V}}\right)^{{\Gamma}}$', fontsize='20')
+axs[1].plot(z, power_law(z, *popt), color='tab:purple', label= fr'$C = {popt[0]:.0f} \pm {diag[0]:.0f}$ [mm$^2$]' + '\n' + fr'${{\Gamma}} = {popt[1]:.2f} \pm {diag[1]:.2f}$')
+axs[1].text(1.7, 440, fr'$\tau(\frac{{S}}{{V}}) = C\cdot \left(\frac{{S}}{{V}}\right)^{{\Gamma}}$', bbox=dict(boxstyle="round", fc='none', ec="black"))
 axs[1].set_xscale('log')
 axs[1].set_yscale('log')
 axs[1].grid()
-axs[1].set_xlabel(r'$S_{sample}/V_{sample}$ [1/mm]', fontsize = 20)
-axs[1].set_ylabel(r'$\tau$ [days]', fontsize = 20)
+axs[1].set_xlabel(r'$S_{sample}/V_{sample}$ [1/mm]', fontsize='20')
+axs[1].set_ylabel(r'$\tau$ [days]', fontsize='20')
 axs[1].tick_params(axis='x', labelsize=20)
 axs[1].tick_params(axis='y', labelsize=20)
-axs[1].legend(fontsize='15', loc='lower left')
+axs[1].legend(loc='lower left')
 '''
 axs[1].annotate(
     fr'$\tau(\frac{{S}}{{V}}) = C\cdot \left(\frac{{S}}{{V}}\right)^{{\Gamma}}$' + '\n' + fr'$C = {popt[0]:.0f} \pm {diag[0]:.0f}$ [mm$^2$]' + '\n' + fr'${{\Gamma}} = {popt[1]:.2f} \pm {diag[1]:.2f}$',
@@ -399,19 +468,21 @@ relative_deltas = (deltas/P0s)*(100)
 x = np.hstack([V/(V_gas-V), 1/20.208])
 print(x)
 y = np.hstack([relative_deltas, (245/800)*100])
-popt, pcov = curve_fit(sigmoid, x, y, p0 = [np.median(x), 1])
-z = np.linspace(min(V/(V_gas-V)), 0.08, 1000)
-#axs[2].plot(z, sigmoid(z, *popt), color='tab:orange')
-axs[2].errorbar(V/(V_gas-V), relative_deltas, marker='^', linestyle='', color='tab:blue')
+popt, pcov = curve_fit(power_law, x, y, sigma=y*0.05)
+print(popt, np.sqrt(np.diag(pcov)))
+z = np.linspace(min(V/(V_gas-V)), max(V/(V_gas-V)), 1000)
+axs[2].plot(z, power_law(z, *popt), color='tab:orange', label= fr'$D = {popt[0]:.0f} \pm {diag[0]:.0f}$' + '\n' + fr'${{\xi}} = {popt[1]:.2f} \pm {diag[1]:.2f}$')
+axs[2].errorbar(V/(V_gas-V), relative_deltas, marker='^', linestyle='', color='tab:pink')
+axs[2].text(0.02, 80, fr'$\frac{{\Delta_p}}{{P_0}}(\frac{{V_{{samples}}}}{{V_{{gas}}}}) = D\cdot \left(\frac{{V_{{samples}}}}{{V_{{gas}}}}\right)^{{\xi}}$', bbox=dict(boxstyle="round", fc='none', ec="black"))
 #axs[2].errorbar(1/20.208, (245/800)*100, marker='*', linestyle='', label='GPD 38', color='tab:green')
-axs[2].set_xlabel(r'$V_{samples}/V_{gas}$', fontsize = 20)
-axs[2].set_ylabel(r'$\frac{\Delta_P}{P_0}$ [%]', fontsize = 20)
-axs[2].tick_params(axis='x', labelsize=20)
-axs[2].tick_params(axis='y', labelsize=20)
-#axs[2].set_xscale('log')
+axs[2].set_xlabel(r'$V_{samples}/V_{gas}$', fontsize='20')
+axs[2].set_ylabel(r'$\frac{\Delta_P}{P_0}$ [%]', fontsize='20')
+axs[2].set_xscale('log')
 axs[2].set_yscale('log')
 axs[2].set_yticks(np.linspace(10, 100, 10), minor=True)
 axs[2].set_xticks(np.array([0.02, 0.04, 0.06]), minor=False)
+
+axs[2].legend(loc='best')
 
 # Imposta i minor ticks per rendere la griglia più fitta
 #ax.tick_params(np.logspace(10, 100, 10), minor=True)

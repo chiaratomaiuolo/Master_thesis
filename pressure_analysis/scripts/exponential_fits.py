@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 from scipy.optimize import curve_fit
+from uncertainties import unumpy
 
 from pressure_analysis.models import expo, alpha_expo_scale, double_expo, empty_AC_exp
 from pressure_analysis.filtering import temperature_butterworth_filtering
@@ -48,6 +49,7 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
     """
     i = hours_start #states the start of the dataset in terms of hours from first data object
     popts = []
+    pcovs = []
     hours = [hours_start]
     mask = x < i
     if yerr is None:
@@ -57,12 +59,13 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
             while mask[-1] == False:
                 mask = x < i
                 hours.append(i)
-                popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=popts[-1])
+                popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], yerr= np.full(len(y_data[mask]), 0.2), p0=popts[-1])
                 popts.append(popt_)
                 i += hours_lag
             #Fit considering entire dataset after having iterated on time intervals
             popt_, pcov_ = curve_fit(exp_model, x, y_data, p0=popts[-1])
             popts.append(popt_)
+            pcovs.append(pcov_)
             hours.append(x[-1])
             print(f'Optimal parameters for {exp_model.__name__} fit of the entire dataset:')
             print(f'{popt_} +/- {np.sqrt(np.diag(pcov_))}')
@@ -71,7 +74,7 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
             axs[0].set(ylabel=r'$P_{eq}$ [mbar]', xlabel='Time [hours]')
             axs[1].axhline(y=0., color='r', linestyle='-')
             fig.suptitle(f'Fit of {hours[-1]} [hours] with {exp_model.__name__}')
-            return hours, popts
+            return hours, popts, pcovs
         except RuntimeError as e:
             print(e)
             plt.figure()
@@ -84,6 +87,7 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
         try:
             popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0, sigma=yerr[mask], absolute_sigma=True)
             popts.append(popt_)
+            pcovs.append(pcov_)
             while mask[-1] == False:
                 mask = x < i
                 hours.append(i)
@@ -93,6 +97,7 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
             #Fit considering entire dataset after having iterated on time intervals
             popt_, pcov_ = curve_fit(exp_model, x, y_data, p0=popts[-1])
             popts.append(popt_)
+            pcovs.append(pcov_)
             hours.append(x[-1])
             print(f'Optimal parameters for {exp_model.__name__} fit of the entire dataset:')
             print(f'{popt_} +/- {np.sqrt(np.diag(pcov_))}')
@@ -101,7 +106,7 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
             axs[0].set(ylabel=r'$P_{eq}$ [mbar]', xlabel='Time [hours]')
             axs[1].axhline(y=0., color='r', linestyle='-')
             fig.suptitle(f'Fit of {hours[-1]} [hours] with {exp_model.__name__}')
-            return hours, popts
+            return hours, popts, pcovs
         except RuntimeError as e:
             print(e)
             plt.figure()
@@ -127,10 +132,11 @@ def parameters_plots(x, popts):
     #Plotting trend of parameters of the fit model
     n_of_params = len(popts[0])
     fig, axs = plt.subplots(n_of_params)
-    fig.suptitle(fr'Optimal parameters trends')
+    #fig.suptitle(fr'Optimal parameters trends')
     for i in range(n_of_params):
         popt_list = [p[i] for p in popts]
-        axs[i].errorbar(x, popt_list, marker='.', linestyle='')
+
+        axs[i].errorbar(x, popt_list, marker='d', linestyle='', color='tab:orange')
         axs[i].set(xlabel=r'Time [hours]', ylabel=f'popt[{i}]')
         axs[i].grid(True)
     
@@ -194,6 +200,10 @@ if __name__ == "__main__":
     timestamps, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange,\
     P4, P5, t_diffs = LabViewdata_reading(paths_to_data, start_times, stop_times)
 
+    P4 = unumpy.uarray(P4, np.full(len(P4), 0.12))
+    T5 = unumpy.uarray(T5,  np.full(len(T5), 0.1))
+    T5 = T5+0.16*(T6-T5)/1.16 #°C
+
     #Computing time in hours and effective temperature
     t_hours = t_diffs/3600 #hours
     T_eff = T5+0.16*(T6-T5)/1.16 #°C
@@ -204,9 +214,9 @@ if __name__ == "__main__":
     print(P4)
 
     #Computing the equivalent pressure
-    P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
-    dP_eq = np.sqrt((77/(P4*100))**2 + (0.05/T_eff_filtered)**2) #relative
-    dP_eq = P_eq*dP_eq #absolute
+    P_eq = unumpy.nominal_values((((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100) #mbar
+    dP_eq = unumpy.std_devs((((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100)
+    #dP_eq = P_eq*dP_eq #absolute
     print(P_eq)
     print(len(dP_eq), len(P_eq))
 
@@ -242,23 +252,68 @@ if __name__ == "__main__":
 
     model = funcs[args.func]
 
-    #Performing fit for first dataset
-    hours, popts = iterative_exponential_fit(t_hours, P_eq, model,\
+    #Performing fit for I dataset
+    hours, popts, pcovs = iterative_exponential_fit(t_hours, P_eq, model,\
                       p0=args.list, yerr=dP_eq, hours_start=38, hours_lag=24)
     
-    fig, axs=plot_with_residuals(t_hours, P_eq, model, popts[-1])
-    fig.suptitle('Dataset from 26/02/2024 - First set of epoxy samples')
-
+    #chi2 = (((P_eq - double_expo(t_hours, *popts[-1]))/(dP_eq))**2).sum()
+    #print(f'REDUCED CHI SQUARE FOR FIRST SAMPLE SET: {chi2}/{len(P_eq)-4}, {chi2/(len(P_eq)-4)}')
+    
+    fig, axs=plot_with_residuals(t_hours, P_eq, model, popts[-1], yerr=dP_eq)
+    popt1 = popts[-1]
+    diag1 = np.sqrt(np.diag(pcovs[-1]))
+    #chi_2 = (((P_eq - alpha_expo_scale(t_hours, *popt1))/(dP_eq))**2).sum()
+    axs[0].set(ylabel=r'$p_{eq}$ [mbar]')
+    axs[0].grid()
+    '''
+    axs[0].annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt1[0]:.2f} \pm {diag1[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt1[1]:.2f} \pm {diag1[1]:.2f}$ [mbar],' + '\n' + fr'$\alpha={popt1[2]:.5f} \pm {diag1[2]:.5f}$,'+ '\n' + fr'$\tau={popt1[3]:.1f} \pm {diag1[3]:.1f}$ [hours]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq)-4}',
+    xy=(270, 1080), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
+    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
+                    connectionstyle="angle"))
+    axs[1].set(xlabel='Time from filling [hours]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+    axs[1].grid()
+    '''
+    
+    
+    dpopt = diag1
+    '''
+    axs[0].annotate(
+    r'$p(t) = p_0 - \left[ \Delta_s(1- \exp{\left(-\frac{t}{\tau_s}\right)}) + \Delta_v(1- \exp{\left(-\frac{t}{\tau_v}\right)}) \right]$' + '\n' + fr'$p_0$={popts[-1][0]:.2f} $\pm$ {dpopt[0]:.2f} [mbar],' + '\n' + fr'$\Delta_s$={popts[-1][1]:.2f} $\pm$ {dpopt[1]:.2f} [mbar],' + '\n' + fr'$\tau_s$={popts[-1][2]:.2f} $\pm$ {dpopt[2]:.2f} [hours],' + '\n' + fr'$\Delta_v$={popts[-1][3]:.2f} $\pm$ {dpopt[3]:.2f} [mbar],' + '\n' + fr'$\tau_v$={popts[-1][4]:.2f} $\pm$ {dpopt[4]:.2f} [hours]',
+    xy=(180, 1080), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
+    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
+                    connectionstyle="angle"))
+    '''
+    axs[0].annotate(
+    r'$p(t) = p_0 - \Delta_p(1- \exp{\left(-\frac{t}{\tau}\right)})$' + '\n' + fr'$p_0$={popts[-1][0]:.2f} $\pm$ {dpopt[0]:.2f} [mbar],' + '\n' + fr'$\Delta$={popts[-1][1]:.2f} $\pm$ {dpopt[1]:.2f} [mbar],' + '\n' + fr'$\tau$={popts[-1][2]:.2f} $\pm$ {dpopt[2]:.2f} [hours],',
+    xy=(180, 1080), xycoords='data',
+    xytext=(0, 0), textcoords='offset points',
+    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
+    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
+                    connectionstyle="angle"))
+    axs[1].set(xlabel='Time from filling [hours]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
+    axs[1].grid()
+    
+    
+    
+    #fig.suptitle('Dataset from 26/02/2024 - First set of epoxy samples')
+    
     fig, axs = parameters_plots(hours, popts)
-    axs[0].set(ylabel=r'$P_0$ [mbar]')
-    axs[1].set(ylabel=r'$\Delta_1$ [mbar]')
-    axs[2].set(ylabel=r'$\alpha$')
-    axs[3].set(ylabel=r'$\tau$ [hours]')
+    axs[0].set(ylabel=r'$p_0$ [mbar]')
+    axs[1].set(ylabel=r'$\Delta_p$ [mbar]')
+    #axs[2].set(ylabel=r'$\alpha$')
+    axs[2].set(ylabel=r'$\tau$ [hours]')
+    #axs[4].set(ylabel=r'$\tau_v$ [hours]', xlabel='Time from filling [hours]')
     
     print(f'Asymptotic values for {model.__name__}')
     print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
     print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
-
+    
+    '''
     #Performing fit for second dataset
     hours0804, popts0804 = iterative_exponential_fit(t_hours0804, P_eq0804, model,\
                       p0=args.list, yerr=dP_eq0804, hours_start=38, hours_lag=24)
@@ -294,12 +349,14 @@ if __name__ == "__main__":
     axs[1].grid()
 
     '''
+    '''
     #Constructing the plots of the ratio of the two datasets
     plt.figure('Ratio between datasets')
     plt.errorbar(t_hours[0:len(t_diffs0804)], (P_eq[0:len(P_eq0804)]/P_eq[0])/(P_eq0804/P_eq0804[0]),\
                 marker='.', label='First dataset / second dataset')
     plt.grid()
     plt.legend()
+    '''
     '''
 
     #Datafiles from 17/04/2024, 10:47 - AC DME filled, III set of epoxy samples inside, T_Julabo = 22°C
@@ -360,7 +417,7 @@ if __name__ == "__main__":
         print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
         print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
     
-
+    '''
 
 
     '''
