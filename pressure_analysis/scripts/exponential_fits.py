@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 from uncertainties import unumpy
 
-from pressure_analysis.models import expo, alpha_expo_scale, double_expo, empty_AC_exp
+from pressure_analysis.models import expo, alpha_expo_scale, double_expo
 from pressure_analysis.filtering import temperature_butterworth_filtering
 from pressure_analysis.labviewdatareading import LabViewdata_reading, plot_with_residuals
 
@@ -26,7 +26,7 @@ EXPONENTIAL_FITS_ARGPARSER.add_argument('-p0','--list', nargs='+', type=float, r
                                         must be the same as the number of parameters\
                                         of exponential_model function.")
 
-def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.array=None, yerr: np.array=None, hours_start:float=24, hours_lag: float=24):
+def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.array=None, yerr: np.array=None, start:float=24, hours_lag: float=24):
     """Performs an iterative fit on an increasing-lenght dataset until its end.
     At the end of the fit prints the parameters and plots the last fitting 
     curve (containing all data of the dataset).
@@ -42,17 +42,30 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
     - mask: np.array
         Array mask used for cutting on data
     - p0 : np.array
-        Array containing the starting initial parameters of the double exp.
+        Array containing the starting initial parameters of the exponential model.
     - hours_lag : float
         Float that states the part of the dataset (in terms of hours) that
         is added to the fitted data at every iteration.
+
+    Return
+    -------
+    - hours : list 
+        List containing the times from filling in hours of every fit.
+    - popts : list
+        List containing the optimal parameters of every fit performed.
+    - pcovs : list
+        List containing the covariance matrix of the parameters
+        of every fit performed.
+
     """
-    i = hours_start #states the start of the dataset in terms of hours from first data object
+    #Stating the start of the dataset in terms of hours from first data object
+    i = start 
+    # Creating the lists that store the trend of the optimal parameters
     popts = []
     pcovs = []
-    hours = [hours_start]
-    mask = x < i
-    if yerr is None:
+    hours = [start]
+    mask = x < i #Using the mask (if any)
+    if yerr is None: # Fitting without errors if they are not provided
         try:
             popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0)
             popts.append(popt_)
@@ -62,7 +75,7 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
                 popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], yerr= np.full(len(y_data[mask]), 0.2), p0=popts[-1])
                 popts.append(popt_)
                 i += hours_lag
-            #Fit considering entire dataset after having iterated on time intervals
+            #Fit using the entire dataset
             popt_, pcov_ = curve_fit(exp_model, x, y_data, p0=popts[-1])
             popts.append(popt_)
             pcovs.append(pcov_)
@@ -82,8 +95,8 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
             plt.plot(x[mask], exp_model(x[mask], *p0), label='Curve with initial parameters')
             plt.grid()
             plt.legend()
-            return None, None
-    else:
+            return None, None, None
+    else: #yerr are provided, fitting using the errors on y
         try:
             popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=p0, sigma=yerr[mask], absolute_sigma=True)
             popts.append(popt_)
@@ -94,7 +107,7 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
                 popt_, pcov_ = curve_fit(exp_model, x[mask], y_data[mask], p0=popts[-1])
                 popts.append(popt_)
                 i += hours_lag
-            #Fit considering entire dataset after having iterated on time intervals
+            #Fit using the entire dataset
             popt_, pcov_ = curve_fit(exp_model, x, y_data, p0=popts[-1])
             popts.append(popt_)
             pcovs.append(pcov_)
@@ -115,20 +128,20 @@ def iterative_exponential_fit(x: np.array, y_data: np.array, exp_model, p0: np.a
             plt.grid()
             plt.legend()
             plt.show()
-            return None, None
-
-    #Plotting pts, fit and residuals for fit of the first 3 hours
-    '''
-    fig, axs = plot_with_residuals(t_hours[mask], P_eq[mask], exp_model(t_hours[mask], *popt_))
-    fig.suptitle(f'Fit of the first {hours_start} hours of data with a {exp_model.__name__}')
-    
-    axs[0].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ [mbar]')
-    axs[0].grid(True)
-    axs[1].set(xlabel=r'Time [hours]', ylabel=r'$P_{eq}$ normalized residuals')
-    axs[1].grid(True)
-    '''
+            return None, None, None
 
 def parameters_plots(x, popts):
+    """Plots the trend over time of the optimal parameters of the exponential
+       model of interest.
+    
+    Arguments
+    ---------
+    - x : np.array or array-like
+        Array of times
+    - popts: list or array-like
+        List containing the values of the optimal parameters to be plotted.
+    
+    """
     #Plotting trend of parameters of the fit model
     n_of_params = len(popts[0])
     fig, axs = plt.subplots(n_of_params)
@@ -146,8 +159,9 @@ def parameters_plots(x, popts):
 if __name__ == "__main__":
     #Obtaining argument parser objects
     args = EXPONENTIAL_FITS_ARGPARSER.parse_args()
-    #Datafiles are briefly descripted above their pathfile line. 
+    #Datafiles are briefly described above their pathfile line.
     #Select the interested one and comment the other paths_to_data, start_times, stop_times
+
     #Datafiles from 12/02/2024 to 22/02/2024 - AC DME filled without epoxy samples
     #paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_DME_measurements.txt']
 
@@ -161,16 +175,16 @@ if __name__ == "__main__":
     #paths_to_data = ["/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_DME_with_epoxysamples_40degrees.txt"]
     #paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from2602.txt']
     #paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from0804.txt']
-    '''
-    start_times = [['2024-02-26 15:51:00.000','2024-02-27 8:00:00.000', 
-                    '2024-02-28 8:00:00.000','2024-02-29 8:00:00.000',
-                    '2024-03-01 8:00:00.000','2024-03-02 8:00:00.000',
-                    '2024-03-03 8:00:00.000']]
-    stop_times = [['2024-02-26 22:00:00.000','2024-02-27 22:00:00.000',
-                   '2024-02-28 22:00:00.000','2024-02-29 22:00:00.000',
-                   '2024-03-01 22:00:00.000','2024-03-02 22:00:00.000',
-                   '2024-03-03 22:00:00.000']]
-    '''
+
+    
+    #start_times = [['2024-02-26 15:51:00.000','2024-02-27 8:00:00.000', 
+    #                '2024-02-28 8:00:00.000','2024-02-29 8:00:00.000',
+    #                '2024-03-01 8:00:00.000','2024-03-02 8:00:00.000',
+    #                '2024-03-03 8:00:00.000']]
+    #stop_times = [['2024-02-26 22:00:00.000','2024-02-27 22:00:00.000',
+    #               '2024-02-28 22:00:00.000','2024-02-29 22:00:00.000',
+    #               '2024-03-01 22:00:00.000','2024-03-02 22:00:00.000',
+    #               '2024-03-03 22:00:00.000']]
 
     #Data from 26/2 to 4/4, with 22°C, until gas heating
     start_times = [['2024-02-26 15:50:35.000']]
@@ -178,10 +192,9 @@ if __name__ == "__main__":
 
     #Data from 26/2 to 4/4, with 22°C (two different time intervals, in the middle
     #temperature was set to 40°C)
+
     #start_times = [['2024-02-26 15:50:35.000', '2024-03-25 13:00:00.000']]
     #stop_times = [['2024-03-15 9:00:00.000', None]]
-
-
 
     #Data from 4/4, with 22°C, after having rose for some day to 40°C
     #start_times = [['2024-03-26 14:00:00.000']]
@@ -191,37 +204,33 @@ if __name__ == "__main__":
     #start_times = [['2024-04-08 11:35:35.000']]
     #stop_times = [[None]]
 
+    # --------------------------------------------------------------------------
 
-    #Data sampling parameters (from logbook)
+    #Data sampling parameters (from data sampling logbook)
     log_time = 5000e-3 #s
     T_Julabo = 22 #°C
 
-    #Obtaining data
+    #Loading the dataset with the first set of epoxy samples inside
     timestamps, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange,\
     P4, P5, t_diffs = LabViewdata_reading(paths_to_data, start_times, stop_times)
 
+    # Including uncertainties in the quantities of interest
     P4 = unumpy.uarray(P4, np.full(len(P4), 0.12))
     T5 = unumpy.uarray(T5,  np.full(len(T5), 0.1))
-    T5 = T5+0.16*(T6-T5)/1.16 #°C
 
-    #Computing time in hours and effective temperature
-    t_hours = t_diffs/3600 #hours
+    # Constructing the statistic for the temperature inside AC 
+    # (In first round, this was not monitored directly)
     T_eff = T5+0.16*(T6-T5)/1.16 #°C
 
-    #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
-    #T_eff_filtered = temperature_butterworth_filtering(T_eff, log_time)
-    T_eff_filtered = T_eff
-    print(P4)
+    #Computing time in hours
+    t_hours = t_diffs/3600 #hours
 
-    #Computing the equivalent pressure
-    P_eq = unumpy.nominal_values((((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100) #mbar
-    dP_eq = unumpy.std_devs((((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100)
-    #dP_eq = P_eq*dP_eq #absolute
-    print(P_eq)
-    print(len(dP_eq), len(P_eq))
+    #Computing the equivalent pressure, quantity that takes into consideration
+    # The temperature variations inside AC
+    P_eq = unumpy.nominal_values((((P4*100)/(T_eff+273.15))*(T_Julabo+273.15))/100) #mbar
+    dP_eq = unumpy.std_devs((((P4*100)/(T_eff+273.15))*(T_Julabo+273.15))/100)
 
-
-    #Loading the second dataset
+    #Loading the dataset with the second set of epoxy samples inside
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from0804.txt']
     #Data from 8/4, with 22°C with new epoxy samples
     start_times = [['2024-04-08 11:35:35.000']]
@@ -230,146 +239,71 @@ if __name__ == "__main__":
     log_time = 5000e-3 #s
     T_Julabo = 22 #°C
 
-    #Obtaining data
-    timestamps0804, T00804, T10804, T20804, T30804, T40804, T50804, T60804, T70804,\
-    TJ0804, P00804, P10804, P20804, P30804, PressFullrange0804, P40804, P50804, \
-    t_diffs0804 = LabViewdata_reading(paths_to_data, start_times, stop_times)
-
-    #Computing time in hours and effective temperature
-    t_hours0804 = t_diffs0804/3600 #hours
-    T_eff0804 = T50804+0.16*(T60804-T50804)/1.16 #°C
-
-    #Filtering the effective temperature in order to compensate time lag and heat capacity of AC
-    T_eff_filtered0804 = temperature_butterworth_filtering(T_eff0804, log_time)
-    #T_eff_filtered = T_eff
-
-    #Computing the equivalent pressure
-    P_eq0804 = (((P40804*100)/(T_eff_filtered0804+273.15))*(T_Julabo+273.15))/100 #mbar
-    dP_eq0804 = np.sqrt((77/(P40804*100))**2 + (0.05/T_eff_filtered0804)**2) #relative
-    dP_eq0804 = P_eq0804*dP_eq0804 #absolute
-    #print(dP_eq0804)
-    #print(len(dP_eq0804), len(P_eq0804))
-
+    # Selecting the exponential model from argparse argument
     model = funcs[args.func]
 
+    # I DATASET
     #Performing fit for I dataset
     hours, popts, pcovs = iterative_exponential_fit(t_hours, P_eq, model,\
                       p0=args.list, yerr=dP_eq, hours_start=38, hours_lag=24)
     
-    #chi2 = (((P_eq - double_expo(t_hours, *popts[-1]))/(dP_eq))**2).sum()
-    #print(f'REDUCED CHI SQUARE FOR FIRST SAMPLE SET: {chi2}/{len(P_eq)-4}, {chi2/(len(P_eq)-4)}')
-    
+    # Plotting the fitted trend and the correspondent residuals
     fig, axs=plot_with_residuals(t_hours, P_eq, model, popts[-1], yerr=dP_eq)
     popt1 = popts[-1]
     diag1 = np.sqrt(np.diag(pcovs[-1]))
-    #chi_2 = (((P_eq - alpha_expo_scale(t_hours, *popt1))/(dP_eq))**2).sum()
+    chi_2 = (((P_eq - model(t_hours, *popt1))/(dP_eq))**2).sum()
     axs[0].set(ylabel=r'$p_{eq}$ [mbar]')
     axs[0].grid()
-    '''
-    axs[0].annotate(
-    r'$p(t) = p_0 - \Delta_p(1- \exp{-\left(\frac{t}{\tau}\right)^{\alpha}})$' + '\n' + f'$p_0={popt1[0]:.2f} \pm {diag1[0]:.2f}$ [mbar],' + '\n' + fr'$\Delta_p={popt1[1]:.2f} \pm {diag1[1]:.2f}$ [mbar],' + '\n' + fr'$\alpha={popt1[2]:.5f} \pm {diag1[2]:.5f}$,'+ '\n' + fr'$\tau={popt1[3]:.1f} \pm {diag1[3]:.1f}$ [hours]' + '\n' + rf'$\chi^2$/ndof = {chi_2:.1f}/{len(P_eq)-4}',
-    xy=(270, 1080), xycoords='data',
-    xytext=(0, 0), textcoords='offset points',
-    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
-    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
-                    connectionstyle="angle"))
-    axs[1].set(xlabel='Time from filling [hours]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
-    axs[1].grid()
-    '''
-    
-    
     dpopt = diag1
-    '''
-    axs[0].annotate(
-    r'$p(t) = p_0 - \left[ \Delta_s(1- \exp{\left(-\frac{t}{\tau_s}\right)}) + \Delta_v(1- \exp{\left(-\frac{t}{\tau_v}\right)}) \right]$' + '\n' + fr'$p_0$={popts[-1][0]:.2f} $\pm$ {dpopt[0]:.2f} [mbar],' + '\n' + fr'$\Delta_s$={popts[-1][1]:.2f} $\pm$ {dpopt[1]:.2f} [mbar],' + '\n' + fr'$\tau_s$={popts[-1][2]:.2f} $\pm$ {dpopt[2]:.2f} [hours],' + '\n' + fr'$\Delta_v$={popts[-1][3]:.2f} $\pm$ {dpopt[3]:.2f} [mbar],' + '\n' + fr'$\tau_v$={popts[-1][4]:.2f} $\pm$ {dpopt[4]:.2f} [hours]',
-    xy=(180, 1080), xycoords='data',
-    xytext=(0, 0), textcoords='offset points',
-    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
-    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
-                    connectionstyle="angle"))
-    '''
-    axs[0].annotate(
-    r'$p(t) = p_0 - \Delta_p(1- \exp{\left(-\frac{t}{\tau}\right)})$' + '\n' + fr'$p_0$={popts[-1][0]:.2f} $\pm$ {dpopt[0]:.2f} [mbar],' + '\n' + fr'$\Delta$={popts[-1][1]:.2f} $\pm$ {dpopt[1]:.2f} [mbar],' + '\n' + fr'$\tau$={popts[-1][2]:.2f} $\pm$ {dpopt[2]:.2f} [hours],',
-    xy=(180, 1080), xycoords='data',
-    xytext=(0, 0), textcoords='offset points',
-    bbox=dict(boxstyle="round", fc="1", ec=plt.gca().lines[-1].get_color()),
-    arrowprops=dict(arrowstyle="->", ec=plt.gca().lines[-1].get_color(),
-                    connectionstyle="angle"))
     axs[1].set(xlabel='Time from filling [hours]', ylabel=r'Normalized residuals [# $\sigma_{p}$]')
     axs[1].grid()
     
-    
-    
-    #fig.suptitle('Dataset from 26/02/2024 - First set of epoxy samples')
-    
+    # Plotting the trend of optimal parameters over time
     fig, axs = parameters_plots(hours, popts)
-    axs[0].set(ylabel=r'$p_0$ [mbar]')
-    axs[1].set(ylabel=r'$\Delta_p$ [mbar]')
-    #axs[2].set(ylabel=r'$\alpha$')
-    axs[2].set(ylabel=r'$\tau$ [hours]')
-    #axs[4].set(ylabel=r'$\tau_v$ [hours]', xlabel='Time from filling [hours]')
     
+    print('I DATASET RESULTS:')
     print(f'Asymptotic values for {model.__name__}')
     print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
     print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
+
+    # II DATASET
+    #Loading the dataset with the first set of epoxy samples inside
+    timestamps, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange,\
+    P4, P5, t_diffs = LabViewdata_reading(paths_to_data, start_times, stop_times)
+
+    #Computing time in hours and effective temperature
+    t_hours = t_diffs/3600 #hours
+    T_eff = T5+0.16*(T6-T5)/1.16 #°C
+
+    #Computing the equivalent pressure
+    P_eq = (((P4*100)/(T_eff+273.15))*(T_Julabo+273.15))/100 #mbar
+    dP_eq = np.sqrt((77/(P4*100))**2 + (0.05/T_eff)**2) #relative
+    dP_eq = P_eq*dP_eq #absolute
     
-    '''
-    #Performing fit for second dataset
-    hours0804, popts0804 = iterative_exponential_fit(t_hours0804, P_eq0804, model,\
-                      p0=args.list, yerr=dP_eq0804, hours_start=38, hours_lag=24)
+    #Performing fit for II dataset
+    hours, popts = iterative_exponential_fit(t_hours, P_eq, model,\
+                      p0=args.list, yerr=dP_eq, hours_start=38, hours_lag=24)
     
-    fig, axs=plot_with_residuals(t_hours0804, P_eq0804, model, popts0804[-1])
-    fig.suptitle('Dataset from 08/04/2024 - Second set of epoxy samples')
-    
+    # Plotting the fitted trend and the correspondent residuals
+    fig, axs=plot_with_residuals(t_hours, P_eq, model, popts[-1])
+    print('II DATASET RESULTS:')   
     print(f'Asymptotic values for {model.__name__}')
-    print(f'asymptotic value = {model(4*popts0804[-1][-1],*popts0804[-1])}')
-    print(f'4 charasteric times are {(4*popts0804[-1][-1])/24} days')
+    print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
+    print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
 
-    fig, axs = parameters_plots(hours0804, popts0804)
-    axs[0].set(ylabel=r'$P_0$ [mbar]')
-    axs[1].set(ylabel=r'$\Delta_1$ [mbar]')
-    axs[2].set(ylabel=r'$\alpha$')
-    axs[3].set(ylabel=r'$\tau$ [hours]')
+    # Plotting the trend of optimal parameters over time
+    fig, axs = parameters_plots(hours, popts)
 
-    #Comparing the two datasets
-    fig, axs = plt.subplots(2)
-    axs[0].plot(t_hours[0:len(t_diffs0804)], P_eq[0:len(P_eq0804)], marker='.', linestyle='', color='tab:blue', label='First dataset')
-    axs[0].plot(t_hours[0:len(t_diffs0804)], model(t_hours[0:len(t_diffs0804)], *popts[-1]), color='tab:orange', label=fr'First dataset, $\alpha$ = {popts[-1][2]:.2f}')
-    axs[0].plot(t_hours0804, P_eq0804, marker='.', linestyle='', color='tab:green', label='Second dataset')
-    axs[0].plot(t_hours0804, model(t_hours0804, *popts0804[-1]),color='tab:red', label=fr'Second dataset $\alpha$ = {popts0804[-1][2]:.2f}')
-    axs[0].legend()
-    axs[0].grid()
-
-
-    res_normalized = (P_eq - model(t_hours, *popts[-1]))/P_eq
-    res_normalized0804 = (P_eq0804 - model(t_hours0804, *popts0804[-1]))/P_eq0804
-    axs[1].plot(t_hours[0:len(t_diffs0804)], res_normalized[0:len(t_diffs0804)], color='tab:blue', label='First dataset residuals')
-    axs[1].plot(t_hours0804, res_normalized0804, color='tab:green', label='Second dataset residuals')
-    axs[1].legend()
-    axs[1].grid()
-
-    '''
-    '''
-    #Constructing the plots of the ratio of the two datasets
-    plt.figure('Ratio between datasets')
-    plt.errorbar(t_hours[0:len(t_diffs0804)], (P_eq[0:len(P_eq0804)]/P_eq[0])/(P_eq0804/P_eq0804[0]),\
-                marker='.', label='First dataset / second dataset')
-    plt.grid()
-    plt.legend()
-    '''
-    '''
-
+    # III DATASET
     #Datafiles from 17/04/2024, 10:47 - AC DME filled, III set of epoxy samples inside, T_Julabo = 22°C
     paths_to_data = ['/Users/chiara/Desktop/Thesis_material/Master_thesis/pressure_analysis/Data/merged_measurements_from1704.txt']
-    
     start_times = [['2024-04-19 12:21:00.000']]
     stop_times = [[None]]
 
     #Data sampling parameters (from logbook)
     log_time = 5000e-3 #s
     T_Julabo = 22 #°C
-
-    #Obtaining data
+    
     timestamps, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange,\
     P4, P5, t_diffs = LabViewdata_reading(paths_to_data, start_times, stop_times)
 
@@ -385,8 +319,6 @@ if __name__ == "__main__":
     P_eq = (((P4*100)/(T_eff_filtered+273.15))*(T_Julabo+273.15))/100 #mbar
     dP_eq = np.sqrt((77/(P4*100))**2 + (0.05/T_eff_filtered)**2) #relative
     dP_eq = P_eq*dP_eq #absolute
-    #print(dP_eq)
-    #print(len(dP_eq), len(P_eq))
 
     #Performing fit for III dataset
     hours, popts = iterative_exponential_fit(t_hours, P_eq, model,\
@@ -416,81 +348,5 @@ if __name__ == "__main__":
         print(f'Asymptotic values for {model.__name__}, third set of epoxy samples')
         print(f'asymptotic value = {model(4*popts[-1][-1],*popts[-1])}')
         print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
-    
-    '''
-
-
-    '''
-
-    def time_shifted_alpha_expo(t, t0, P0, delta):
-        return (alpha_expo_scale(t+t0, P0, delta, 0.5297, 1471.))
-    
-    initial_params = [300., 1170., 330.]
-    popt, pcov = curve_fit(time_shifted_alpha_expo, t_hours, P_eq, p0=initial_params, sigma=dP_eq, absolute_sigma=True)
-    print(f'{popt} +/- {np.sqrt(np.diag(pcov))}')
-    print(f'Covariance matrix:\n {pcov}')
-
-    print(f'asymptotic value = {time_shifted_alpha_expo(4*1471,*popt)}')
-    print(f'4 charasteric times are {4*1471/24} days')
-
-    fig, axs=plot_with_residuals(t_hours, P_eq, time_shifted_alpha_expo, popt, yerr=dP_eq)
-    fig.suptitle('Dataset from 25/03/2024')
-    '''
-    
-    '''
-    fig, axs = parameters_plots(hours, popts)
-    axs[0].set(ylabel=r'$P_0$ [mbar]')
-    axs[1].set(ylabel=r'$\Delta_1$ [mbar]')
-    axs[2].set(ylabel=r'$\alpha$')
-    axs[3].set(ylabel=r'$\tau$ [hours]')
-    '''
-    '''
-
-    #Defining a custom function and redoing iterative fit
-    def exp_with_alpha_fixed(t, P0, Delta, tau):
-        return alpha_expo_scale(t, P0, Delta, 0.5, tau)
-    
-    def double_alpha(t, P0, delta1, tau1, delta2, alpha2, tau2):
-        return expo(t, P0, delta1, tau1) + alpha_expo_scale(t+0.13, 0., delta2, alpha2, tau2)
-    
-    
-    hours, popts = iterative_exponential_fit(t_hours, P_eq, double_alpha,\
-                      p0=[1202., 2.2, 0.397, 564., 0.525, 1569.5], hours_start=38, hours_lag=24)
-    
-    print(f'asymptotic value = {double_alpha(4*popts[-1][-1],*popts[-1])}')
-    print(f'4 charasteric times are {(4*popts[-1][-1])/24} days')
-    
-
-    fig, axs = parameters_plots(hours, popts)
-    axs[0].set(ylabel=r'$P_0$ [mbar]')
-    axs[1].set(ylabel=r'$\Delta_1$ [mbar]')
-    axs[2].set(ylabel=r'$\tau_1$ [hours]')
-    axs[3].set(ylabel=r'$\Delta_2$ [hours]')
-    axs[4].set(ylabel=r'$\alpha$')
-    axs[1].set(ylabel=r'$\Delta_2$ [mbar]')
-    
-    '''
-    '''
-    hours, popts = iterative_exponential_fit(t_hours, P_eq, exp_with_alpha_fixed,\
-                      p0=[[1.19855940e+03, 2.74738884e+02, 2.96778217e+02]], hours_start=24, hours_lag=24)
-
-    
-    popt, pcov = curve_fit(exp_with_alpha_fixed, t_hours, P_eq, p0=[[1201., 671., 500.]])
-    #plot_with_residuals(t_hours, P_eq, alpha_expo_scale(t_hours, *popt))
-    #print(popt)
-    print(f'asymptotic value = {exp_with_alpha_fixed(4*popts[-1][-1],*popts[-1])}')
-    print(f'4 charasteric times are {(4*popt[-1])/24} days')
-    plt.figure()
-    z = np.linspace(0, 10000, 5000)
-    plt.plot(z, exp_with_alpha_fixed(z, *popt))
-
-    fig, axs = parameters_plots(hours, popts)
-    '''
-    
-    
-
-    
-
-    
 
     plt.show()
