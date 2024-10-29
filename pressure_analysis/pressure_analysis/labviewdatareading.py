@@ -14,15 +14,6 @@ __description__ = \
     P1 - Setra Filling (mbar)	P2 - Omega AC (mbar)	P3 - Omega GTC (mbar)	PressFullrange (mbar)\
     P4 - MKS AC (mbar)	P5 - MKS GPD (mbar)
 """
-def uncertainty_computation(val):
-    """This function associates an uncertainty to every LabView data point, taking 
-    as uncertainty half of the least significant digit of the measure. 
-    (Hopefully, this function is necessary only until rms is inserted into the logged dataset)
-    """
-    if isinstance(val, float) and val.is_integer():
-        return 0.5
-    else:
-        return (10 ** -np.floor(np.log10(abs(val))))*50
 
 def LabViewdata_reading(paths_to_datafile: list[str], start_times: list[str], stop_times: list[str]):
     """This function takes as input a list of paths to .txt data files and two lists
@@ -122,7 +113,6 @@ def LabViewdata_reading(paths_to_datafile: list[str], start_times: list[str], st
     timestamps_diff = np.array([(tmstp.timestamp() - timestamp[0].timestamp()) for tmstp in timestamp]).astype(float) #difference from the starting pt in s
     
     return [timestamp, T0, T1, T2, T3, T4, T5, T6, T7, TJ, P0, P1, P2, P3, PressFullrange, P4, P5, timestamps_diff]
-
 
 def plot_with_residuals(x: np.array, y_data: np.array, model, popt: np.array, yerr: np.array=None):
     """Function for creating a figure with two subplots. 
