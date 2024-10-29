@@ -1,8 +1,6 @@
-import argparse
-
 import numpy as np 
 import matplotlib.pyplot as plt 
-from uncertainties import ufloat, unumpy
+from uncertainties import ufloat
 from scipy.optimize import curve_fit 
 
 
